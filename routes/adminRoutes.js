@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const adminController = require('../controllers/adminController');
+
+// Fixed: Updated to match your 'adminControllers.js' file name
+const adminController = require('../controllers/adminControllers');
 const { isAuthenticated, isAdmin } = require('../middleware/authMiddleware');
 
-// Protect all admin endpoints
+// Protect all admin endpoints with authentication & role checks
 router.use(isAuthenticated, isAdmin);
 
 // Admin Dashboard

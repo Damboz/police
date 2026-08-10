@@ -7,28 +7,28 @@
    -------------------------------------------------------------------------- */
 :root {
   /* Brand Palette */
-  --mps-navy: #0F172A;          /* Deep Security Navy */
-  --mps-navy-hover: #1E293B;    /* Lighter Navy hover */
-  --mps-navy-light: #334155;    /* Muted Slate Navy */
-  --mps-gold: #F59E0B;          /* Badge Gold / Warning Accent */
-  --mps-gold-hover: #D97706;
+  --mps-navy: rgb(2, 116, 176);             /* Deep Security Navy */
+  --mps-navy-hover: rgba(2, 116, 176, 0.8); /* Lighter Navy hover */
+  --mps-navy-light: rgb(51, 65, 85);       /* Muted Slate Navy */
+  --mps-gold: rgb(247, 198, 49);           /* Badge Gold / Warning Accent */
+  --mps-gold-hover: rgb(217, 119, 6);
   
   /* System State Colors */
-  --mps-blue: #2563EB;          /* Primary Actions */
-  --mps-success: #16A34A;       /* Closed Cases / Active / Verified */
-  --mps-warning: #EA580C;       /* Under Investigation / Pending */
-  --mps-danger: #DC2626;        /* High Severity / Alert / Overdue */
-  --mps-info: #0284C7;          /* General Info / Logs */
+  --mps-blue: rgb(37, 99, 235);            /* Primary Actions */
+  --mps-success: rgb(22, 163, 74);         /* Closed Cases / Active / Verified */
+  --mps-warning: rgb(234, 88, 12);         /* Under Investigation / Pending */
+  --mps-danger: rgb(220, 38, 38);          /* High Severity / Alert / Overdue */
+  --mps-info: rgb(2, 132, 199);            /* General Info / Logs */
 
   /* Surface & Backgrounds */
-  --mps-bg-page: #F8FAFC;       /* Off-white background */
-  --mps-bg-card: #FFFFFF;       /* Pure white card backgrounds */
-  --mps-bg-subtle: #F1F5F9;     /* Form input & section contrast */
-  --mps-border-color: #E2E8F0;  /* Standard border */
+  --mps-bg-page: rgb(248, 250, 252);       /* Off-white background */
+  --mps-bg-card: rgb(255, 255, 255);       /* Pure white card backgrounds */
+  --mps-bg-subtle: rgb(241, 245, 249);     /* Form input & section contrast */
+  --mps-border-color: rgb(226, 232, 240);  /* Standard border */
 
   /* Text Colors */
-  --mps-text-main: #1E293B;     /* High contrast body text */
-  --mps-text-muted: #64748B;    /* Subtitles, timestamps, metadata */
+  --mps-text-main: rgb(30, 41, 59);        /* High contrast body text */
+  --mps-text-muted: rgb(100, 116, 139);    /* Subtitles, timestamps, metadata */
   
   /* Structural Dimensions */
   --mps-sidebar-width: 260px;
@@ -88,11 +88,11 @@ a:hover {
   background: var(--mps-bg-page);
 }
 ::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
+  background: rgb(203, 213, 225);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
+  background: rgb(148, 163, 184);
 }
 
 /* --------------------------------------------------------------------------
@@ -150,12 +150,12 @@ a:hover {
 }
 
 /* --------------------------------------------------------------------------
-   4. SIDEBAR NAVIGATION
+   4. SIDEBAR NAVIGATION & TOP-LEFT BRANDING
    -------------------------------------------------------------------------- */
 .sidebar {
   width: var(--mps-sidebar-width);
   background-color: var(--mps-navy);
-  color: #FFFFFF;
+  color: rgb(255, 255, 255);
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -163,21 +163,29 @@ a:hover {
   transition: width 0.2s ease-in-out;
 }
 
+/* Header/Brand Section */
 .sidebar-brand {
   height: var(--mps-topbar-height);
+  padding: 0 1rem;
   display: flex;
   align-items: center;
-  padding: 0 1.25rem;
-  font-weight: 700;
-  font-size: 1.1rem;
-  letter-spacing: 0.03em;
-  color: #FFFFFF;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.sidebar-brand i {
-  color: var(--mps-gold);
-  margin-right: 0.75rem;
+.sidebar-logo-container {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-logo {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 50%;
 }
 
 .sidebar-menu {
@@ -193,14 +201,14 @@ a:hover {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #94A3B8;
+  color: rgb(148, 163, 184);
 }
 
 .sidebar-link {
   display: flex;
   align-items: center;
   padding: 0.65rem 1.25rem;
-  color: #CBD5E1;
+  color: rgb(203, 213, 225);
   font-weight: 500;
   font-size: 0.875rem;
   transition: all 0.15s ease;
@@ -212,12 +220,12 @@ a:hover {
   font-size: 1rem;
   margin-right: 0.75rem;
   text-align: center;
-  color: #94A3B8;
+  color: rgb(148, 163, 184);
   transition: color 0.15s ease;
 }
 
 .sidebar-link:hover {
-  color: #FFFFFF;
+  color: rgb(255, 255, 255);
   background-color: var(--mps-navy-hover);
   text-decoration: none;
 }
@@ -227,7 +235,7 @@ a:hover {
 }
 
 .sidebar-link.active {
-  color: #FFFFFF;
+  color: rgb(255, 255, 255);
   background-color: var(--mps-navy-hover);
   border-left-color: var(--mps-gold);
 }
@@ -252,7 +260,7 @@ a:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--mps-navy) 0%, #1E293B 100%);
+  background: linear-gradient(135deg, var(--mps-navy) 0%, rgb(30, 41, 59) 100%);
   padding: 1.5rem;
 }
 
@@ -267,24 +275,36 @@ a:hover {
 
 .auth-header {
   background-color: var(--mps-navy);
-  color: #FFFFFF;
+  color: rgb(255, 255, 255);
   padding: 2rem 1.5rem;
   text-align: center;
   border-bottom: 3px solid var(--mps-gold);
 }
 
+/* Badge Icon & Station Logo Container */
 .auth-header .auth-badge-icon {
-  width: 56px;
-  height: 56px;
-  background: rgba(245, 158, 11, 0.15);
-  color: var(--mps-gold);
+  width: 96px;
+  height: 96px;
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.75rem;
-  margin-bottom: 0.75rem;
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  border: 2px solid rgba(247, 198, 49, 0.5);
+  overflow: hidden;
+  padding: 4px;
+  box-shadow: 0 0 20px rgba(247, 198, 49, 0.2);
+}
+
+/* Station Logo Image Rendering */
+.auth-header .auth-badge-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  border-radius: 50%;
 }
 
 .auth-body {
@@ -317,7 +337,7 @@ a:hover {
 .card-header.bg-navy,
 .card-header.bg-dark-navy {
   background-color: var(--mps-navy) !important;
-  color: #FFFFFF;
+  color: rgb(255, 255, 255);
   border-bottom: 2px solid var(--mps-gold);
 }
 
@@ -342,7 +362,7 @@ a:hover {
   font-size: 1.25rem;
 }
 
-.metric-icon.navy { background-color: rgba(15, 23, 42, 0.1); color: var(--mps-navy); }
+.metric-icon.navy { background-color: rgba(2, 116, 176, 0.1); color: var(--mps-navy); }
 .metric-icon.blue { background-color: rgba(37, 99, 235, 0.1); color: var(--mps-blue); }
 .metric-icon.warning { background-color: rgba(234, 88, 12, 0.1); color: var(--mps-warning); }
 .metric-icon.success { background-color: rgba(22, 163, 74, 0.1); color: var(--mps-success); }
@@ -400,18 +420,18 @@ a:hover {
   padding: 0.55rem 0.75rem;
   font-size: 0.875rem;
   color: var(--mps-text-main);
-  background-color: #FFFFFF;
+  background-color: rgb(255, 255, 255);
   transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
 .form-control:focus, .form-select:focus {
   border-color: var(--mps-navy-light);
-  box-shadow: 0 0 0 0.25rem rgba(15, 23, 42, 0.12);
+  box-shadow: 0 0 0 0.25rem rgba(2, 116, 176, 0.15);
   outline: 0;
 }
 
 .form-control::placeholder {
-  color: #94A3B8;
+  color: rgb(148, 163, 184);
 }
 
 /* Input Group Icon Styling */
@@ -446,16 +466,16 @@ a:hover {
 .text-gold { color: var(--mps-gold) !important; }
 
 /* Police CMS Case Status Badges */
-.badge-case-open { background-color: rgba(37, 99, 235, 0.15); color: #1D4ED8; }
-.badge-case-investigation { background-color: rgba(234, 88, 12, 0.15); color: #C2410C; }
-.badge-case-closed { background-color: rgba(22, 163, 74, 0.15); color: #15803D; }
-.badge-case-archived { background-color: rgba(100, 116, 139, 0.15); color: #475569; }
+.badge-case-open { background-color: rgba(37, 99, 235, 0.15); color: rgb(29, 78, 216); }
+.badge-case-investigation { background-color: rgba(234, 88, 12, 0.15); color: rgb(194, 65, 12); }
+.badge-case-closed { background-color: rgba(22, 163, 74, 0.15); color: rgb(21, 128, 61); }
+.badge-case-archived { background-color: rgba(100, 116, 139, 0.15); color: rgb(71, 85, 105); }
 
 /* Priority & Severity Badges */
-.badge-priority-critical { background-color: var(--mps-danger); color: #FFFFFF; }
-.badge-priority-high { background-color: #EF4444; color: #FFFFFF; }
-.badge-priority-medium { background-color: var(--mps-gold); color: #FFFFFF; }
-.badge-priority-low { background-color: #94A3B8; color: #FFFFFF; }
+.badge-priority-critical { background-color: var(--mps-danger); color: rgb(255, 255, 255); }
+.badge-priority-high { background-color: rgb(239, 68, 68); color: rgb(255, 255, 255); }
+.badge-priority-medium { background-color: var(--mps-gold); color: rgb(30, 41, 59); }
+.badge-priority-low { background-color: rgb(148, 163, 184); color: rgb(255, 255, 255); }
 
 /* Buttons */
 .btn {
@@ -469,26 +489,26 @@ a:hover {
 .btn-navy {
   background-color: var(--mps-navy);
   border-color: var(--mps-navy);
-  color: #FFFFFF;
+  color: rgb(255, 255, 255);
 }
 
 .btn-navy:hover, .btn-navy:focus {
   background-color: var(--mps-navy-hover);
   border-color: var(--mps-navy-hover);
-  color: #FFFFFF;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+  color: rgb(255, 255, 255);
+  box-shadow: 0 4px 12px rgba(2, 116, 176, 0.25);
 }
 
 .btn-gold {
   background-color: var(--mps-gold);
   border-color: var(--mps-gold);
-  color: #FFFFFF;
+  color: rgb(30, 41, 59);
 }
 
 .btn-gold:hover {
   background-color: var(--mps-gold-hover);
   border-color: var(--mps-gold-hover);
-  color: #FFFFFF;
+  color: rgb(255, 255, 255);
 }
 
 /* --------------------------------------------------------------------------
@@ -499,7 +519,7 @@ a:hover {
   border: 1px solid var(--mps-border-color);
   border-radius: var(--mps-radius-md);
   overflow: hidden;
-  background: #FFFFFF;
+  background: rgb(255, 255, 255);
 }
 
 .evidence-thumb {
@@ -556,7 +576,7 @@ a:hover {
   height: 10px;
   border-radius: 50%;
   background-color: var(--mps-blue);
-  border: 2px solid #FFFFFF;
+  border: 2px solid rgb(255, 255, 255);
 }
 
 .timeline-date {
@@ -580,8 +600,8 @@ a:hover {
   }
 
   body {
-    background-color: #FFFFFF !important;
-    color: #000000 !important;
+    background-color: rgb(255, 255, 255) !important;
+    color: rgb(0, 0, 0) !important;
     font-size: 11pt;
   }
 
@@ -599,13 +619,13 @@ a:hover {
   }
 
   .card {
-    border: 1px solid #000000 !important;
+    border: 1px solid rgb(0, 0, 0) !important;
     box-shadow: none !important;
     page-break-inside: avoid;
   }
 
   .page-header {
-    border-bottom: 2px solid #000000;
+    border-bottom: 2px solid rgb(0, 0, 0);
     padding-bottom: 0.5rem;
     margin-bottom: 1.5rem;
   }

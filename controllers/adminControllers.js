@@ -15,13 +15,16 @@ exports.getAdminDashboard = async (req, res, next) => {
             SELECT a.*, u.badge_number, u.first_name, u.last_name 
             FROM audit_logs a
             LEFT JOIN users u ON a.user_id = u.id
-            ORDER BY a.created_at DESC LIMIT 10
+            ORDER BY a.created_at DESC 
+            LIMIT 10
         `);
 
         res.render('admin/dashboard', {
             title: 'Admin Dashboard | Limbe Police CMS',
             stats: { totalUsers, activeUsers, totalLogins },
-            recentLogs
+            recentLogs,
+            success: req.flash ? req.flash('success') : null,
+            error: req.flash ? req.flash('error') : null
         });
     } catch (err) {
         next(err);
@@ -86,7 +89,7 @@ exports.postCreateUser = async (req, res, next) => {
     try {
         const { badge_number, rank_title, first_name, last_name, email, phone_number, role, password } = req.body;
 
-        // basic validation
+        // Basic validation
         if (!badge_number || !first_name || !last_name || !email || !role || !password) {
             return res.render('admin/users/create', {
                 title: 'Register Personnel | Limbe Police CMS',
@@ -126,11 +129,18 @@ exports.postCreateUser = async (req, res, next) => {
             hashedPassword
         ]);
 
+        // Safely extract current Admin ID
+        const adminId = (req.session && req.session.user) ? req.session.user.id : (req.user ? req.user.id : null);
+
         // Audit Log entry
         await db.execute(
             'INSERT INTO audit_logs (user_id, action, details) VALUES (?, ?, ?)',
-            [req.session.user.id, 'USER_CREATED', `Created user ${badge_number} (${role})`]
+            [adminId, 'USER_CREATED', `Created user ${badge_number.trim()} (${role})`]
         );
+
+        if (req.flash) {
+            req.flash('success', `Officer ${first_name.trim()} ${last_name.trim()} (${badge_number.trim()}) registered successfully.`);
+        }
 
         res.redirect('/admin/users');
     } catch (err) {
@@ -145,14 +155,21 @@ exports.postCreateUser = async (req, res, next) => {
 exports.toggleUserStatus = async (req, res, next) => {
     try {
         const userId = req.params.id;
+        const currentUserId = (req.session && req.session.user) ? req.session.user.id : (req.user ? req.user.id : null);
 
         // Prevent admin from deactivating themselves
-        if (parseInt(userId) === parseInt(req.session.user.id)) {
+        if (currentUserId && parseInt(userId, 10) === parseInt(currentUserId, 10)) {
+            if (req.flash) {
+                req.flash('error', 'You cannot deactivate your own active account.');
+            }
             return res.redirect('/admin/users');
         }
 
-        const [users] = await db.execute('SELECT is_active, badge_number FROM users WHERE id = ?', [userId]);
-        if (users.length === 0) return res.redirect('/admin/users');
+        const [users] = await db.execute('SELECT is_active, badge_number, first_name, last_name FROM users WHERE id = ?', [userId]);
+        if (users.length === 0) {
+            if (req.flash) req.flash('error', 'User account not found.');
+            return res.redirect('/admin/users');
+        }
 
         const newStatus = users[0].is_active ? 0 : 1;
         await db.execute('UPDATE users SET is_active = ? WHERE id = ?', [newStatus, userId]);
@@ -160,8 +177,12 @@ exports.toggleUserStatus = async (req, res, next) => {
         // Audit Log entry
         await db.execute(
             'INSERT INTO audit_logs (user_id, action, details) VALUES (?, ?, ?)',
-            [req.session.user.id, 'STATUS_CHANGE', `Toggled user status for ${users[0].badge_number} to ${newStatus ? 'Active' : 'Inactive'}`]
+            [currentUserId, 'STATUS_CHANGE', `Toggled status for ${users[0].badge_number} to ${newStatus ? 'Active' : 'Inactive'}`]
         );
+
+        if (req.flash) {
+            req.flash('success', `Account for ${users[0].first_name} ${users[0].last_name} (${users[0].badge_number}) updated to ${newStatus ? 'Active' : 'Inactive'}.`);
+        }
 
         res.redirect('/admin/users');
     } catch (err) {

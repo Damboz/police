@@ -12,6 +12,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 const dotenv = require('dotenv');
 const session = require('express-session');
+const flash = require('connect-flash');
 const bcrypt = require('bcryptjs');
 
 // Load environment variables from .env
@@ -20,20 +21,23 @@ dotenv.config();
 // Load Database Connection Pool
 let dbPool;
 try {
-  dbPool = require('./config/db');
+    dbPool = require('./config/db');
 } catch (e) {
-  const mysql = require('mysql2/promise');
-  dbPool = mysql.createPool({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || process.env.DB_PASS || '',
-    database: process.env.DB_NAME || 'limbe_police_cms',
-    port: process.env.DB_PORT || 3306,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-  });
+    const mysql = require('mysql2/promise');
+    dbPool = mysql.createPool({
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || process.env.DB_PASS || '',
+        database: process.env.DB_NAME || 'limbe_police_cms',
+        port: process.env.DB_PORT || 3306,
+        waitForConnections: true,
+        connectionLimit: 10,
+        queueLimit: 0
+    });
 }
+
+// Import Modular Routes
+const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -64,12 +68,15 @@ app.use(session({
     }
 }));
 
-// Pass local variables globally to all EJS templates
+// Enable Flash Messages
+app.use(flash());
+
+// Pass global variables to all EJS templates
 app.use((req, res, next) => {
     res.locals.session = req.session;
     res.locals.currentUser = req.session ? req.session.user : null;
-    res.locals.error = null;
-    res.locals.success = null;
+    res.locals.error = req.flash('error');
+    res.locals.success = req.flash('success');
     next();
 });
 
@@ -79,14 +86,6 @@ const isAuthenticated = (req, res, next) => {
         return next();
     }
     res.redirect('/auth/login');
-};
-
-// Route Guard: Restricts route to Admin users
-const isAdmin = (req, res, next) => {
-    if (req.session && req.session.user && req.session.user.role === 'Admin') {
-        return next();
-    }
-    res.status(403).send('<h2>403 Forbidden</h2><p>Administrative privileges required.</p><a href="/dashboard">Return to Dashboard</a>');
 };
 
 
@@ -113,8 +112,8 @@ app.get('/auth/login', (req, res) => {
     }
     res.render('auth/login', {
         title: 'Login | Limbe Police Station CMS',
-        error: null,
-        success: null
+        error: req.flash('error').length > 0 ? req.flash('error') : null,
+        success: req.flash('success').length > 0 ? req.flash('success') : null
     });
 });
 
@@ -218,7 +217,7 @@ app.get('/auth/logout', async (req, res) => {
 
 
 // ----------------------------------------------------------------------------
-// B. DASHBOARD & ADMINISTRATIVE VIEWS
+// B. DASHBOARD ROUTE
 // ----------------------------------------------------------------------------
 
 // GET /dashboard - Main Station Dashboard
@@ -232,7 +231,7 @@ app.get('/dashboard', isAuthenticated, async (req, res) => {
         // Fetch recent cases list
         const [recentCases] = await dbPool.execute('SELECT * FROM cases ORDER BY created_at DESC LIMIT 5');
 
-        // Fetch recent audit logs required by dashboard.ejs
+        // Fetch recent audit logs required by dashboard
         const [recentLogs] = await dbPool.execute(`
             SELECT a.*, u.badge_number, u.rank_title, u.first_name, u.last_name 
             FROM audit_logs a 
@@ -252,29 +251,16 @@ app.get('/dashboard', isAuthenticated, async (req, res) => {
     }
 });
 
-// GET /admin/audit-logs - Security Audit Trail View
-app.get('/admin/audit-logs', isAuthenticated, isAdmin, async (req, res) => {
-    try {
-        const [logs] = await dbPool.execute(`
-            SELECT a.*, u.badge_number, u.rank_title, u.first_name, u.last_name, u.role
-            FROM audit_logs a
-            LEFT JOIN users u ON a.user_id = u.id
-            ORDER BY a.created_at DESC LIMIT 100
-        `);
 
-        res.render('admin/audit-logs', {
-            title: 'Security Audit Logs | Limbe Police CMS',
-            logs
-        });
-    } catch (err) {
-        console.error('Audit Logs Error:', err);
-        res.status(500).send('Error Loading Audit Trail');
-    }
-});
+// ----------------------------------------------------------------------------
+// C. ADMIN ROUTES (MOUNTED ROUTER)
+// Routes: /admin/dashboard, /admin/users, /admin/users/create, /admin/audit-logs
+// ----------------------------------------------------------------------------
+app.use('/admin', adminRoutes);
 
 
 // ----------------------------------------------------------------------------
-// C. REST API BACKEND ENDPOINTS
+// D. REST API ENDPOINTS
 // ----------------------------------------------------------------------------
 
 app.get('/api/health', (req, res) => {
