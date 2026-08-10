@@ -1,0 +1,94 @@
+<%- include('../partials/header', { title: 'Personnel Portal Sign-In' }) %>
+
+<div class="auth-wrapper">
+    <div class="auth-card">
+        
+        <!-- 1. Police Station Identity Header -->
+        <div class="auth-header">
+            <div class="auth-badge-icon">
+                <i class="bi bi-shield-check"></i>
+            </div>
+            <h4 class="fw-bold text-white mb-1">Limbe Police Station</h4>
+            <div class="text-uppercase font-monospace text-warning small fw-semibold" style="letter-spacing: 0.08em; font-size: 0.725rem;">
+                Case Management System
+            </div>
+        </div>
+
+        <!-- 2. Authentication Form Body -->
+        <div class="auth-body">
+            
+            <!-- System Alert Notifications -->
+            <% if (locals.error) { %>
+                <div class="alert alert-danger alert-dismissible fade show small mb-3 border-0 shadow-sm" role="alert">
+                    <i class="bi bi-exclamation-octagon-fill me-2"></i><%= locals.error %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <% } %>
+
+            <% if (locals.success) { %>
+                <div class="alert alert-success alert-dismissible fade show small mb-3 border-0 shadow-sm" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i><%= locals.success %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <% } %>
+
+            <!-- Sign-In Form -->
+            <form action="/auth/login" method="POST">
+                
+                <!-- Badge / Service # or Email Input -->
+                <div class="mb-3">
+                    <label for="badge_number" class="form-label text-uppercase text-muted" style="font-size: 0.75rem; letter-spacing: 0.05em;">
+                        Badge / Service # or Email
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+                        <input type="text" 
+                               class="form-control" 
+                               id="badge_number" 
+                               name="badge_number" 
+                               placeholder="e.g. MPS-4821" 
+                               required 
+                               autofocus>
+                    </div>
+                </div>
+
+                <!-- Password Input -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label for="password" class="form-label text-uppercase text-muted mb-0" style="font-size: 0.75rem; letter-spacing: 0.05em;">
+                            Access Password
+                        </label>
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-key"></i></span>
+                        <input type="password" 
+                               class="form-control" 
+                               id="password" 
+                               name="password" 
+                               placeholder="••••••••" 
+                               required>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-navy w-100 py-2 shadow-sm mt-2">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>Authenticate & Sign In
+                </button>
+
+            </form>
+        </div>
+
+        <!-- 3. Security Audit Footer -->
+        <div class="p-3 bg-light text-center border-top border-light-subtle">
+            <small class="text-muted d-block fw-semibold" style="font-size: 0.75rem;">
+                <i class="bi bi-shield-lock me-1 text-warning"></i>RESTRICTED PERSONNEL ACCESS
+            </small>
+            <small class="text-muted font-monospace d-block mt-1" style="font-size: 0.6875rem;">
+                System access is strictly audited & logged.
+            </small>
+        </div>
+
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

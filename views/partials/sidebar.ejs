@@ -1,0 +1,117 @@
+<% 
+  const activeUser = locals.currentUser || (locals.session ? locals.session.user : null); 
+  const currentPath = locals.currentPath || ''; 
+%>
+
+<aside class="sidebar">
+    <!-- 1. Station Branding & Logo Block -->
+    <div class="sidebar-brand">
+        <i class="bi bi-shield-check"></i>
+        <div>
+            <div class="lh-1 fw-bold text-white">Limbe Police Station</div>
+            <small class="text-white-50 d-block mt-1" style="font-size: 0.72rem;">Case Management System</small>
+        </div>
+    </div>
+
+    <!-- 2. Core Navigation Menu -->
+    <ul class="sidebar-menu">
+        <li class="sidebar-heading">Core Operations</li>
+
+        <!-- Main Dashboard Navigation -->
+        <li>
+            <a href="/dashboard" class="sidebar-link <%= currentPath === '/dashboard' ? 'active' : '' %>">
+                <i class="bi bi-speedometer2"></i>
+                <span>Dashboard</span>
+            </a>
+        </li>
+
+        <!-- Case Register (Accessible to all authenticated roles) -->
+        <li>
+            <a href="/cases" class="sidebar-link <%= currentPath.startsWith('/cases') ? 'active' : '' %>">
+                <i class="bi bi-folder2-open"></i>
+                <span>Case Register</span>
+            </a>
+        </li>
+
+        <!-- Evidence Ledger (Investigator, Supervisor & Admin) -->
+        <% if (activeUser && ['Investigator', 'Supervisor', 'Admin'].includes(activeUser.role)) { %>
+            <li>
+                <a href="/evidence" class="sidebar-link <%= currentPath.startsWith('/evidence') ? 'active' : '' %>">
+                    <i class="bi bi-box-seam"></i>
+                    <span>Evidence Ledger</span>
+                </a>
+            </li>
+        <% } %>
+
+        <!-- Crime Analytics & Hotspots (Supervisor & Admin) -->
+        <% if (activeUser && ['Supervisor', 'Admin'].includes(activeUser.role)) { %>
+            <li>
+                <a href="/analytics" class="sidebar-link <%= currentPath.startsWith('/analytics') ? 'active' : '' %>">
+                    <i class="bi bi-graph-up-arrow"></i>
+                    <span>Analytics & Hotspots</span>
+                </a>
+            </li>
+        <% } %>
+
+        <!-- System Administrator Operations -->
+        <% if (activeUser && activeUser.role === 'Admin') { %>
+            <li class="sidebar-heading mt-3">Administration</li>
+            
+            <li>
+                <a href="/admin/dashboard" class="sidebar-link <%= currentPath === '/admin/dashboard' ? 'active' : '' %>">
+                    <i class="bi bi-shield-lock"></i>
+                    <span>Admin Overview</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="/admin/users" class="sidebar-link <%= currentPath.startsWith('/admin/users') ? 'active' : '' %>">
+                    <i class="bi bi-people"></i>
+                    <span>Personnel Accounts</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="/admin/audit-logs" class="sidebar-link <%= currentPath.startsWith('/admin/audit-logs') ? 'active' : '' %>">
+                    <i class="bi bi-journal-text"></i>
+                    <span>Security Audit Logs</span>
+                </a>
+            </li>
+        <% } %>
+
+        <li class="sidebar-heading mt-3">Account</li>
+
+        <!-- User Settings & Auth Controls -->
+        <li>
+            <a href="/auth/change-password" class="sidebar-link <%= currentPath === '/auth/change-password' ? 'active' : '' %>">
+                <i class="bi bi-key-fill text-warning"></i>
+                <span>Change Password</span>
+            </a>
+        </li>
+
+        <li>
+            <a href="/auth/logout" class="sidebar-link text-danger">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Sign Out</span>
+            </a>
+        </li>
+    </ul>
+
+    <!-- 3. Sidebar Footer Info -->
+    <div class="sidebar-footer">
+        <% if (activeUser) { %>
+            <div class="d-flex align-items-center mb-2">
+                <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-2" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                    <%= activeUser.name ? activeUser.name.charAt(0).toUpperCase() : 'P' %>
+                </div>
+                <div class="overflow-hidden">
+                    <div class="text-white text-truncate fw-semibold" style="font-size: 0.825rem;"><%= activeUser.name || 'Officer' %></div>
+                    <div class="text-warning text-truncate" style="font-size: 0.7rem;"><%= activeUser.role %></div>
+                </div>
+            </div>
+        <% } %>
+        <div class="text-white-50 pt-2 border-top border-secondary border-opacity-25" style="font-size: 0.68rem;">
+            Malawi Police Service — Limbe Station
+        </div>
+    </div>
+</aside>

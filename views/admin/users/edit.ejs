@@ -1,0 +1,113 @@
+<%- include('../../partials/header') %>
+
+<div class="app-wrapper">
+    <%- include('../../partials/sidebar') %>
+
+    <div class="main-content">
+        <%- include('../../partials/topbar') %>
+
+        <div class="container-fluid py-4">
+            <div class="row justify-content-center">
+                <div class="col-12 col-lg-8">
+                    
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-dark text-white d-flex align-items-center justify-content-between">
+                            <h6 class="mb-0 fw-bold">
+                                <i class="bi bi-pencil-square me-2 text-warning"></i>Edit Personnel Account: <%= user.badge_number %>
+                            </h6>
+                            <a href="/admin/users" class="btn btn-sm btn-outline-light">Back to List</a>
+                        </div>
+
+                        <div class="card-body p-4">
+                            <% if (locals.error) { %>
+                                <div class="alert alert-danger alert-dismissible fade show small mb-3">
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i><%= locals.error %>
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            <% } %>
+
+                            <form action="/admin/users/<%= user.id %>/edit" method="POST">
+                                <div class="row g-3">
+                                    
+                                    <!-- Badge Number (Disabled/Read-only for security) -->
+                                    <div class="col-md-6">
+                                        <label for="badge_number" class="form-label fw-semibold small text-uppercase">Badge / Service #</label>
+                                        <input type="text" class="form-control bg-light" id="badge_number" value="<%= user.badge_number %>" disabled>
+                                        <div class="form-text small">Badge numbers cannot be changed once created.</div>
+                                    </div>
+
+                                    <!-- Rank Title -->
+                                    <div class="col-md-6">
+                                        <label for="rank_title" class="form-label fw-semibold small text-uppercase">Official Rank *</label>
+                                        <select class="form-select" id="rank_title" name="rank_title" required>
+                                            <option value="Constable" <%= user.rank_title === 'Constable' ? 'selected' : '' %>>Constable</option>
+                                            <option value="Sergeant" <%= user.rank_title === 'Sergeant' ? 'selected' : '' %>>Sergeant</option>
+                                            <option value="Inspector" <%= user.rank_title === 'Inspector' ? 'selected' : '' %>>Inspector</option>
+                                            <option value="Assistant Superintendent" <%= user.rank_title === 'Assistant Superintendent' ? 'selected' : '' %>>Assistant Superintendent</option>
+                                            <option value="Superintendent" <%= user.rank_title === 'Superintendent' ? 'selected' : '' %>>Superintendent</option>
+                                            <option value="Station Commander" <%= user.rank_title === 'Station Commander' ? 'selected' : '' %>>Station Commander</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- First Name -->
+                                    <div class="col-md-6">
+                                        <label for="first_name" class="form-label fw-semibold small text-uppercase">First Name *</label>
+                                        <input type="text" class="form-control" id="first_name" name="first_name" value="<%= user.first_name %>" required>
+                                    </div>
+
+                                    <!-- Last Name -->
+                                    <div class="col-md-6">
+                                        <label for="last_name" class="form-label fw-semibold small text-uppercase">Last Name *</label>
+                                        <input type="text" class="form-control" id="last_name" name="last_name" value="<%= user.last_name %>" required>
+                                    </div>
+
+                                    <!-- Email -->
+                                    <div class="col-md-6">
+                                        <label for="email" class="form-label fw-semibold small text-uppercase">Official Email *</label>
+                                        <input type="email" class="form-control" id="email" name="email" value="<%= user.email %>" required>
+                                    </div>
+
+                                    <!-- Phone Number -->
+                                    <div class="col-md-6">
+                                        <label for="phone_number" class="form-label fw-semibold small text-uppercase">Phone Number</label>
+                                        <input type="text" class="form-control" id="phone_number" name="phone_number" value="<%= user.phone_number || '' %>">
+                                    </div>
+
+                                    <!-- System Role -->
+                                    <div class="col-md-6">
+                                        <label for="role" class="form-label fw-semibold small text-uppercase">System Access Role (RBAC) *</label>
+                                        <select class="form-select" id="role" name="role" required>
+                                            <option value="Police Officer" <%= user.role === 'Police Officer' ? 'selected' : '' %>>Police Officer / Desk Officer</option>
+                                            <option value="Investigator" <%= user.role === 'Investigator' ? 'selected' : '' %>>Investigator / Detective</option>
+                                            <option value="Supervisor" <%= user.role === 'Supervisor' ? 'selected' : '' %>>Supervisor / Station Commander</option>
+                                            <option value="Admin" <%= user.role === 'Admin' ? 'selected' : '' %>>System Administrator</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Optional Reset Password -->
+                                    <div class="col-md-6">
+                                        <label for="new_password" class="form-label fw-semibold small text-uppercase">Reset Password (Optional)</label>
+                                        <input type="password" class="form-control" id="new_password" name="new_password" placeholder="Leave blank to keep current password">
+                                    </div>
+
+                                </div>
+
+                                <hr class="my-4 text-muted">
+
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <a href="/admin/users" class="btn btn-outline-secondary">Cancel</a>
+                                    <button type="submit" class="btn btn-primary px-4 fw-bold">
+                                        <i class="bi bi-save me-1"></i> Save Changes
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../../partials/footer') %>

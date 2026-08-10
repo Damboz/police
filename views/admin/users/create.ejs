@@ -1,0 +1,114 @@
+<%- include('../../partials/header') %>
+
+<div class="app-wrapper">
+    <%- include('../../partials/sidebar') %>
+
+    <div class="main-content">
+        <%- include('../../partials/topbar') %>
+
+        <div class="container-fluid py-4">
+            <div class="row justify-content-center">
+                <div class="col-12 col-lg-8">
+                    
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-dark text-white d-flex align-items-center justify-content-between">
+                            <h6 class="mb-0 fw-bold">
+                                <i class="bi bi-person-plus-fill me-2 text-warning"></i>Register Station Personnel
+                            </h6>
+                            <a href="/admin/users" class="btn btn-sm btn-outline-light">Back to List</a>
+                        </div>
+
+                        <div class="card-body p-4">
+                            <% if (error) { %>
+                                <div class="alert alert-danger alert-dismissible fade show small mb-3">
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i><%= error %>
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            <% } %>
+
+                            <form action="/admin/users/create" method="POST">
+                                <div class="row g-3">
+                                    
+                                    <!-- Badge Number -->
+                                    <div class="col-md-6">
+                                        <label for="badge_number" class="form-label fw-semibold small text-uppercase">Badge / Service # *</label>
+                                        <input type="text" class="form-control" id="badge_number" name="badge_number" value="<%= formData.badge_number || '' %>" placeholder="e.g. MPS-4821" required>
+                                    </div>
+
+                                    <!-- Rank Title -->
+                                    <div class="col-md-6">
+                                        <label for="rank_title" class="form-label fw-semibold small text-uppercase">Official Rank *</label>
+                                        <select class="form-select" id="rank_title" name="rank_title" required>
+                                            <option value="">Select Rank...</option>
+                                            <option value="Constable">Constable</option>
+                                            <option value="Sergeant">Sergeant</option>
+                                            <option value="Inspector">Inspector</option>
+                                            <option value="Assistant Superintendent">Assistant Superintendent</option>
+                                            <option value="Superintendent">Superintendent</option>
+                                            <option value="Station Commander">Station Commander</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- First Name -->
+                                    <div class="col-md-6">
+                                        <label for="first_name" class="form-label fw-semibold small text-uppercase">First Name *</label>
+                                        <input type="text" class="form-control" id="first_name" name="first_name" value="<%= formData.first_name || '' %>" required>
+                                    </div>
+
+                                    <!-- Last Name -->
+                                    <div class="col-md-6">
+                                        <label for="last_name" class="form-label fw-semibold small text-uppercase">Last Name *</label>
+                                        <input type="text" class="form-control" id="last_name" name="last_name" value="<%= formData.last_name || '' %>" required>
+                                    </div>
+
+                                    <!-- Email -->
+                                    <div class="col-md-6">
+                                        <label for="email" class="form-label fw-semibold small text-uppercase">Official Email *</label>
+                                        <input type="email" class="form-control" id="email" name="email" value="<%= formData.email || '' %>" required>
+                                    </div>
+
+                                    <!-- Phone Number -->
+                                    <div class="col-md-6">
+                                        <label for="phone_number" class="form-label fw-semibold small text-uppercase">Phone Number</label>
+                                        <input type="text" class="form-control" id="phone_number" name="phone_number" value="<%= formData.phone_number || '' %>" placeholder="+265 ...">
+                                    </div>
+
+                                    <!-- System Role -->
+                                    <div class="col-md-6">
+                                        <label for="role" class="form-label fw-semibold small text-uppercase">System Access Role (RBAC) *</label>
+                                        <select class="form-select" id="role" name="role" required>
+                                            <option value="">Select Access Role...</option>
+                                            <option value="Police Officer">Police Officer / Desk Officer</option>
+                                            <option value="Investigator">Investigator / Detective</option>
+                                            <option value="Supervisor">Supervisor / Station Commander</option>
+                                            <option value="Admin">System Administrator</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Initial Password -->
+                                    <div class="col-md-6">
+                                        <label for="password" class="form-label fw-semibold small text-uppercase">Initial Password *</label>
+                                        <input type="password" class="form-control" id="password" name="password" minlength="6" required>
+                                    </div>
+
+                                </div>
+
+                                <hr class="my-4 text-muted">
+
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <a href="/admin/users" class="btn btn-outline-secondary">Cancel</a>
+                                    <button type="submit" class="btn btn-primary px-4 fw-bold">
+                                        <i class="bi bi-check-circle me-1"></i> Complete Registration
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../../partials/footer') %>

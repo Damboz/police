@@ -1,0 +1,93 @@
+<%- include('../partials/header') %>
+
+<div class="app-wrapper">
+    <%- include('../partials/sidebar') %>
+
+    <div class="main-content">
+        <%- include('../partials/topbar') %>
+
+        <div class="container-fluid py-4">
+            
+            <!-- Page Header -->
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <div>
+                    <h4 class="fw-bold mb-1" style="color: var(--mps-navy);">
+                        <i class="bi bi-journal-text me-2 text-warning"></i>System Security & Audit Trail Logs
+                    </h4>
+                    <p class="text-muted small mb-0">Immutable records of system actions, logins, user updates, and security events.</p>
+                </div>
+            </div>
+
+            <!-- Audit Logs Table Container -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-dark text-white d-flex align-items-center justify-content-between py-3">
+                    <h6 class="mb-0 fw-bold">
+                        <i class="bi bi-shield-shaded me-2"></i>Recorded Audit Events (Last 100 Entries)
+                    </h6>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table align-middle table-hover mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th># Log ID</th>
+                                <th>Timestamp</th>
+                                <th>Officer / User</th>
+                                <th>Assigned Role</th>
+                                <th>Action Type</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (!logs || logs.length === 0) { %>
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">
+                                        <i class="bi bi-shield-check fs-3 d-block mb-2"></i>
+                                        No audit trail logs recorded in the system.
+                                    </td>
+                                </tr>
+                            <% } else { %>
+                                <% logs.forEach(log => { %>
+                                    <tr>
+                                        <td class="font-monospace small text-muted">#<%= log.id %></td>
+                                        <td class="small font-monospace">
+                                            <%= new Date(log.created_at).toLocaleString() %>
+                                        </td>
+                                        <td class="fw-semibold small">
+                                            <% if (log.badge_number) { %>
+                                                <%= log.rank_title || '' %> <%= log.first_name %> <%= log.last_name %>
+                                                <span class="d-block font-monospace text-primary" style="font-size: 0.75rem;"><%= log.badge_number %></span>
+                                            <% } else { %>
+                                                <span class="text-muted">System / Unauthenticated</span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-light text-dark border"><%= log.role || 'System' %></span>
+                                        </td>
+                                        <td>
+                                            <% if (log.action === 'USER_LOGIN') { %>
+                                                <span class="badge bg-success">USER_LOGIN</span>
+                                            <% } else if (log.action === 'USER_LOGOUT') { %>
+                                                <span class="badge bg-secondary">USER_LOGOUT</span>
+                                            <% } else if (log.action === 'USER_CREATED') { %>
+                                                <span class="badge bg-primary">USER_CREATED</span>
+                                            <% } else if (log.action === 'STATUS_CHANGE') { %>
+                                                <span class="badge bg-warning text-dark">STATUS_CHANGE</span>
+                                            <% } else { %>
+                                                <span class="badge bg-dark"><%= log.action %></span>
+                                            <% } %>
+                                        </td>
+                                        <td class="small text-secondary"><%= log.details %></td>
+                                    </tr>
+                                <% }); %>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
