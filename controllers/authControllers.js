@@ -9,10 +9,14 @@ exports.getLogin = (req, res) => {
     if (req.session && req.session.user) {
         return res.redirect('/dashboard');
     }
+    
+    const flashError = req.flash ? req.flash('error') : null;
+    const flashSuccess = req.flash ? req.flash('success') : null;
+
     res.render('auth/login', {
         title: 'Login | Limbe Police CMS',
-        error: null,
-        success: null
+        error: (flashError && flashError.length > 0) ? flashError[0] : null,
+        success: (flashSuccess && flashSuccess.length > 0) ? flashSuccess[0] : null
     });
 };
 
@@ -27,7 +31,7 @@ exports.postLogin = async (req, res, next) => {
         if (!badge_number || !password) {
             return res.status(400).render('auth/login', {
                 title: 'Login | Limbe Police CMS',
-                error: 'Please provide both Badge Number / Email and Password.',
+                error: 'Please provide both Badge Number / Username and Password.',
                 success: null
             });
         }
@@ -67,7 +71,6 @@ exports.postLogin = async (req, res, next) => {
             });
         }
 
-        // Establish Session
         req.session.user = {
             id: user.id,
             badge_number: user.badge_number,
@@ -78,7 +81,6 @@ exports.postLogin = async (req, res, next) => {
             role: user.role
         };
 
-        // Write to Audit Trail
         await db.execute(
             'INSERT INTO audit_logs (user_id, action, details) VALUES (?, ?, ?)',
             [user.id, 'USER_LOGIN', `Officer ${user.badge_number} logged in successfully.`]
@@ -92,7 +94,7 @@ exports.postLogin = async (req, res, next) => {
 
 /**
  * GET /auth/logout
- * Destroy Session & Redirect
+ * Destroy Session & Redirect to Login
  */
 exports.logout = async (req, res) => {
     if (req.session && req.session.user) {
@@ -119,22 +121,26 @@ exports.logout = async (req, res) => {
 
 /**
  * GET /auth/change-password
- * Render Change Password Form
+ * Render Change Password View (Accessible to ALL logged-in users)
  */
 exports.getChangePassword = (req, res) => {
     if (!req.session || !req.session.user) {
         return res.redirect('/auth/login');
     }
+
+    const flashError = req.flash ? req.flash('error') : null;
+    const flashSuccess = req.flash ? req.flash('success') : null;
+
     res.render('auth/change-password', {
         title: 'Change Password | Limbe Police CMS',
-        error: null,
-        success: null
+        error: (flashError && flashError.length > 0) ? flashError[0] : null,
+        success: (flashSuccess && flashSuccess.length > 0) ? flashSuccess[0] : null
     });
 };
 
 /**
  * POST /auth/change-password
- * Validate & Update User Password
+ * Validate & Update Password (Accessible to ALL logged-in users)
  */
 exports.postChangePassword = async (req, res, next) => {
     try {
@@ -145,6 +151,7 @@ exports.postChangePassword = async (req, res, next) => {
         const { current_password, new_password, confirm_password } = req.body;
         const userId = req.session.user.id;
 
+        // Validation: Required fields
         if (!current_password || !new_password || !confirm_password) {
             return res.render('auth/change-password', {
                 title: 'Change Password | Limbe Police CMS',
@@ -153,6 +160,7 @@ exports.postChangePassword = async (req, res, next) => {
             });
         }
 
+        // Validation: Password matching
         if (new_password !== confirm_password) {
             return res.render('auth/change-password', {
                 title: 'Change Password | Limbe Police CMS',
@@ -161,6 +169,7 @@ exports.postChangePassword = async (req, res, next) => {
             });
         }
 
+        // Validation: Minimum length
         if (new_password.length < 6) {
             return res.render('auth/change-password', {
                 title: 'Change Password | Limbe Police CMS',
@@ -169,6 +178,7 @@ exports.postChangePassword = async (req, res, next) => {
             });
         }
 
+        // Fetch user record
         const [users] = await db.execute('SELECT password_hash, badge_number FROM users WHERE id = ?', [userId]);
         if (users.length === 0) {
             return res.redirect('/auth/login');
@@ -176,6 +186,7 @@ exports.postChangePassword = async (req, res, next) => {
 
         const user = users[0];
 
+        // Verify existing password
         const isMatch = await bcrypt.compare(current_password, user.password_hash);
         if (!isMatch) {
             return res.render('auth/change-password', {
@@ -185,10 +196,11 @@ exports.postChangePassword = async (req, res, next) => {
             });
         }
 
+        // Hash and update to new password
         const hashedNewPassword = await bcrypt.hash(new_password, 10);
         await db.execute('UPDATE users SET password_hash = ? WHERE id = ?', [hashedNewPassword, userId]);
 
-        // Audit Log Entry
+        // Write entry to Audit Logs
         await db.execute(
             'INSERT INTO audit_logs (user_id, action, details) VALUES (?, ?, ?)',
             [userId, 'PASSWORD_CHANGED', `Officer ${user.badge_number} updated their password.`]

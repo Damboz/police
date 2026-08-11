@@ -1,87 +1,86 @@
 <%- include('../partials/header', { title: 'Personnel Portal Sign-In' }) %>
 
-<div class="auth-wrapper">
-    <div class="auth-card">
+<div class="auth-wrapper d-flex align-items-center justify-content-center min-vh-100 bg-light">
+    <div class="auth-card card shadow-lg border-0" style="max-width: 400px; width: 100%;">
         
-        <!-- 1. Station Identity Header with Badge Logo -->
-        <div class="auth-header">
-            <div class="auth-badge-icon">
-                <img src="/logo/image.png" alt="Limbe Police Emblem">
-            </div>
-            <h4 class="fw-bold text-white mb-1">Limbe Police Station</h4>
-            <div class="text-uppercase font-monospace text-warning small fw-semibold" style="letter-spacing: 0.08em; font-size: 0.725rem;">
-                Case Management System
-            </div>
-        </div>
-
-        <!-- 2. Authentication Form Body -->
-        <div class="auth-body">
-            
-            <!-- System Alert Notifications -->
-            <% if (locals.error) { %>
-                <div class="alert alert-danger alert-dismissible fade show small mb-3 border-0 shadow-sm" role="alert">
-                    <i class="bi bi-exclamation-octagon-fill me-2"></i><%= locals.error %>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="card-body p-4 p-md-5">
+            <!-- 1. Station Identity Header with Badge Logo -->
+            <div class="auth-header text-center mb-4">
+                <div class="auth-badge-icon mb-3">
+                    <img src="/logo/image.png" alt="Limbe Police Emblem" style="max-width: 80px; height: auto;">
                 </div>
-            <% } %>
-
-            <% if (locals.success) { %>
-                <div class="alert alert-success alert-dismissible fade show small mb-3 border-0 shadow-sm" role="alert">
-                    <i class="bi bi-check-circle-fill me-2"></i><%= locals.success %>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <h4 class="fw-bold mb-1" style="color: #001f3f;">Limbe Police Station</h4>
+                <div class="text-uppercase font-monospace text-warning small fw-bold" style="letter-spacing: 0.08em; font-size: 0.75rem;">
+                    Case Management System
                 </div>
-            <% } %>
+            </div>
 
-            <!-- Sign-In Form -->
-            <form action="/auth/login" method="POST">
+            <!-- 2. Authentication Form Body -->
+            <div class="auth-body">
                 
-                <!-- Badge Number / Username Input -->
-                <div class="mb-3">
-                    <label for="badge_number" class="form-label text-uppercase text-muted" style="font-size: 0.75rem; letter-spacing: 0.05em;">
-                        Username / Badge Number
-                    </label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
-                        <input type="text" 
-                               class="form-control" 
-                               id="badge_number" 
-                               name="badge_number" 
-                               placeholder="e.g. MPS-4821" 
-                               required 
-                               autofocus>
+                <!-- CRASH-PROOF System Alert Notifications -->
+                <% if (typeof error !== 'undefined' && error && error.length > 0) { %>
+                    <div class="alert alert-danger alert-dismissible fade show small mb-4 border-0 shadow-sm" role="alert">
+                        <i class="bi bi-exclamation-octagon-fill me-2"></i><%= error %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
-                </div>
+                <% } %>
 
-                <!-- Password Input -->
-                <div class="mb-4">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <label for="password" class="form-label text-uppercase text-muted mb-0" style="font-size: 0.75rem; letter-spacing: 0.05em;">
+                <% if (typeof success !== 'undefined' && success && success.length > 0) { %>
+                    <div class="alert alert-success alert-dismissible fade show small mb-4 border-0 shadow-sm" role="alert">
+                        <i class="bi bi-check-circle-fill me-2"></i><%= success %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                <% } %>
+
+                <!-- Sign-In Form -->
+                <form action="/auth/login" method="POST">
+                    
+                    <!-- Badge Number / Username Input -->
+                    <div class="mb-3">
+                        <label for="badge_number" class="form-label text-uppercase text-muted fw-bold" style="font-size: 0.75rem; letter-spacing: 0.05em;">
+                            Username / Badge Number
+                        </label>
+                        <div class="input-group shadow-sm">
+                            <span class="input-group-text bg-white border-end-0"><i class="bi bi-person-badge text-muted"></i></span>
+                            <input type="text" 
+                                   class="form-control border-start-0 ps-0" 
+                                   id="badge_number" 
+                                   name="badge_number" 
+                                   placeholder="e.g. MPS-4821" 
+                                   required 
+                                   autofocus>
+                        </div>
+                    </div>
+
+                    <!-- Password Input -->
+                    <div class="mb-4">
+                        <label for="password" class="form-label text-uppercase text-muted fw-bold mb-1" style="font-size: 0.75rem; letter-spacing: 0.05em;">
                             Password
                         </label>
+                        <div class="input-group shadow-sm">
+                            <span class="input-group-text bg-white border-end-0"><i class="bi bi-key text-muted"></i></span>
+                            <input type="password" 
+                                   class="form-control border-start-0 ps-0" 
+                                   id="password" 
+                                   name="password" 
+                                   placeholder="••••••••" 
+                                   required>
+                        </div>
                     </div>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-key"></i></span>
-                        <input type="password" 
-                               class="form-control" 
-                               id="password" 
-                               name="password" 
-                               placeholder="••••••••" 
-                               required>
-                    </div>
-                </div>
 
-                <!-- Submit Button -->
-                <button type="submit" class="btn btn-navy w-100 py-2 shadow-sm mt-2">
-                    <i class="bi bi-box-arrow-in-right me-2"></i>Authenticate & Sign In
-                </button>
-
-            </form>
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn w-100 py-2 shadow-sm mt-2 text-white fw-bold" style="background-color: #001f3f;">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Authenticate & Sign In
+                    </button>
+                </form>
+            </div>
         </div>
 
         <!-- 3. Security Audit Footer -->
-        <div class="p-3 bg-light text-center border-top border-light-subtle">
-            <small class="text-muted d-block fw-semibold" style="font-size: 0.75rem;">
-                <i class="bi bi-shield-lock me-1 text-warning"></i>RESTRICTED PERSONNEL ACCESS
+        <div class="p-3 bg-light text-center border-top rounded-bottom">
+            <small class="text-muted d-block fw-bold" style="font-size: 0.75rem;">
+                <i class="bi bi-shield-lock-fill me-1 text-warning"></i>RESTRICTED PERSONNEL ACCESS
             </small>
             <small class="text-muted font-monospace d-block mt-1" style="font-size: 0.6875rem;">
                 System access is strictly audited & logged.
