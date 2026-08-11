@@ -289,15 +289,8 @@ app.use((err, req, res, next) => {
     res.status(500).send('An unexpected system error occurred.');
 });
 
-
-// ============================================================================
-// 4. SERVER LAUNCH
-// ============================================================================
-
 app.listen(PORT, () => {
-    console.log(`=======================================================`);
-    console.log(`🚀 Limbe Police Station Web Portal Live: http://localhost:${PORT}`);
-    console.log(`=======================================================`);
+   console.log(`Limbe Police Station Web Portal Live: http://localhost:${PORT}`);
 });
 
 module.exports = app;
