@@ -7,105 +7,152 @@
         <%- include('../../partials/topbar') %>
 
         <div class="container-fluid py-4">
-            <div class="row justify-content-center">
-                <div class="col-12 col-lg-8">
-                    
-                    <div class="card shadow-sm border-0">
-                        <div class="card-header bg-dark text-white d-flex align-items-center justify-content-between">
-                            <h6 class="mb-0 fw-bold">
-                                <i class="bi bi-pencil-square me-2 text-warning"></i>Edit Personnel Account: <%= user.badge_number %>
-                            </h6>
-                            <a href="/admin/users" class="btn btn-sm btn-outline-light">Back to List</a>
+            
+            <!-- Page Header -->
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <div>
+                    <h4 class="fw-bold mb-1" style="color: var(--mps-navy);">
+                        <i class="bi bi-pencil-square me-2 text-warning"></i>Edit Officer Profile
+                    </h4>
+                    <p class="text-muted small mb-0">
+                        Updating records for <%= userToEdit.rank_title || 'Officer' %> <%= userToEdit.first_name %> <%= userToEdit.last_name %> (Badge: <%= userToEdit.badge_number %>)
+                    </p>
+                </div>
+                <a href="/admin/users" class="btn btn-outline-secondary btn-sm fw-bold">
+                    <i class="bi bi-arrow-left me-1"></i>Back to Directory
+                </a>
+            </div>
+
+            <!-- Alerts -->
+            <% if (typeof success !== 'undefined' && success && success.length > 0) { %>
+                <div class="alert alert-success alert-dismissible fade show small mb-4" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i><%= success %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <% } %>
+
+            <% if (typeof error !== 'undefined' && error && error.length > 0) { %>
+                <div class="alert alert-danger alert-dismissible fade show small mb-4" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i><%= error %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <% } %>
+
+            <div class="row g-4 col-lg-11 mx-auto">
+                <!-- Left Column: Personal Info & Role Form -->
+                <div class="col-lg-8">
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-navy text-white py-3 d-flex align-items-center justify-content-between">
+                            <h6 class="mb-0 fw-bold"><i class="bi bi-person-lines-fill me-2"></i>Personal & Role Information</h6>
+                            <span class="badge <%= userToEdit.is_active ? 'bg-success' : 'bg-danger' %> fs-7">
+                                <%= userToEdit.is_active ? 'Active' : 'Inactive' %>
+                            </span>
                         </div>
-
                         <div class="card-body p-4">
-                            <% if (locals.error) { %>
-                                <div class="alert alert-danger alert-dismissible fade show small mb-3">
-                                    <i class="bi bi-exclamation-triangle-fill me-2"></i><%= locals.error %>
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                </div>
-                            <% } %>
-
-                            <form action="/admin/users/<%= user.id %>/edit" method="POST">
-                                <div class="row g-3">
-                                    
-                                    <!-- Badge Number (Disabled/Read-only for security) -->
+                            <form action="/admin/users/<%= userToEdit.id %>/edit" method="POST">
+                                
+                                <div class="row g-3 mb-3">
                                     <div class="col-md-6">
-                                        <label for="badge_number" class="form-label fw-semibold small text-uppercase">Badge / Service #</label>
-                                        <input type="text" class="form-control bg-light" id="badge_number" value="<%= user.badge_number %>" disabled>
-                                        <div class="form-text small">Badge numbers cannot be changed once created.</div>
+                                        <label class="form-label small fw-semibold text-muted">Badge / ID Number</label>
+                                        <input type="text" class="form-control bg-light" value="<%= userToEdit.badge_number %>" readonly disabled>
+                                        <div class="form-text fs-7">Badge numbers cannot be modified.</div>
                                     </div>
-
-                                    <!-- Rank Title -->
                                     <div class="col-md-6">
-                                        <label for="rank_title" class="form-label fw-semibold small text-uppercase">Official Rank *</label>
-                                        <select class="form-select" id="rank_title" name="rank_title" required>
-                                            <option value="Constable" <%= user.rank_title === 'Constable' ? 'selected' : '' %>>Constable</option>
-                                            <option value="Sergeant" <%= user.rank_title === 'Sergeant' ? 'selected' : '' %>>Sergeant</option>
-                                            <option value="Inspector" <%= user.rank_title === 'Inspector' ? 'selected' : '' %>>Inspector</option>
-                                            <option value="Assistant Superintendent" <%= user.rank_title === 'Assistant Superintendent' ? 'selected' : '' %>>Assistant Superintendent</option>
-                                            <option value="Superintendent" <%= user.rank_title === 'Superintendent' ? 'selected' : '' %>>Superintendent</option>
-                                            <option value="Station Commander" <%= user.rank_title === 'Station Commander' ? 'selected' : '' %>>Station Commander</option>
-                                        </select>
+                                        <label for="rank_title" class="form-label small fw-semibold text-muted">Rank / Title</label>
+                                        <input type="text" class="form-control" id="rank_title" name="rank_title" value="<%= userToEdit.rank_title || '' %>" placeholder="e.g. Constable, Inspector">
                                     </div>
-
-                                    <!-- First Name -->
-                                    <div class="col-md-6">
-                                        <label for="first_name" class="form-label fw-semibold small text-uppercase">First Name *</label>
-                                        <input type="text" class="form-control" id="first_name" name="first_name" value="<%= user.first_name %>" required>
-                                    </div>
-
-                                    <!-- Last Name -->
-                                    <div class="col-md-6">
-                                        <label for="last_name" class="form-label fw-semibold small text-uppercase">Last Name *</label>
-                                        <input type="text" class="form-control" id="last_name" name="last_name" value="<%= user.last_name %>" required>
-                                    </div>
-
-                                    <!-- Email -->
-                                    <div class="col-md-6">
-                                        <label for="email" class="form-label fw-semibold small text-uppercase">Official Email *</label>
-                                        <input type="email" class="form-control" id="email" name="email" value="<%= user.email %>" required>
-                                    </div>
-
-                                    <!-- Phone Number -->
-                                    <div class="col-md-6">
-                                        <label for="phone_number" class="form-label fw-semibold small text-uppercase">Phone Number</label>
-                                        <input type="text" class="form-control" id="phone_number" name="phone_number" value="<%= user.phone_number || '' %>">
-                                    </div>
-
-                                    <!-- System Role -->
-                                    <div class="col-md-6">
-                                        <label for="role" class="form-label fw-semibold small text-uppercase">System Access Role (RBAC) *</label>
-                                        <select class="form-select" id="role" name="role" required>
-                                            <option value="Police Officer" <%= user.role === 'Police Officer' ? 'selected' : '' %>>Police Officer / Desk Officer</option>
-                                            <option value="Investigator" <%= user.role === 'Investigator' ? 'selected' : '' %>>Investigator / Detective</option>
-                                            <option value="Supervisor" <%= user.role === 'Supervisor' ? 'selected' : '' %>>Supervisor / Station Commander</option>
-                                            <option value="Admin" <%= user.role === 'Admin' ? 'selected' : '' %>>System Administrator</option>
-                                        </select>
-                                    </div>
-
-                                    <!-- Optional Reset Password -->
-                                    <div class="col-md-6">
-                                        <label for="new_password" class="form-label fw-semibold small text-uppercase">Reset Password (Optional)</label>
-                                        <input type="password" class="form-control" id="new_password" name="new_password" placeholder="Leave blank to keep current password">
-                                    </div>
-
                                 </div>
 
-                                <hr class="my-4 text-muted">
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                        <label for="first_name" class="form-label small fw-semibold text-muted">First Name *</label>
+                                        <input type="text" class="form-control" id="first_name" name="first_name" value="<%= userToEdit.first_name %>" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="last_name" class="form-label small fw-semibold text-muted">Last Name *</label>
+                                        <input type="text" class="form-control" id="last_name" name="last_name" value="<%= userToEdit.last_name %>" required>
+                                    </div>
+                                </div>
 
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <a href="/admin/users" class="btn btn-outline-secondary">Cancel</a>
-                                    <button type="submit" class="btn btn-primary px-4 fw-bold">
-                                        <i class="bi bi-save me-1"></i> Save Changes
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                        <label for="email" class="form-label small fw-semibold text-muted">Email Address *</label>
+                                        <input type="email" class="form-control" id="email" name="email" value="<%= userToEdit.email %>" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="phone_number" class="form-label small fw-semibold text-muted">Phone Number</label>
+                                        <input type="text" class="form-control" id="phone_number" name="phone_number" value="<%= userToEdit.phone_number || '' %>" placeholder="+265 ...">
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label for="role" class="form-label small fw-semibold text-muted">System Assignment / Role *</label>
+                                    <select class="form-select" id="role" name="role" required>
+                                        <option value="Officer" <%= userToEdit.role === 'Officer' ? 'selected' : '' %>>Officer</option>
+                                        <option value="Investigator" <%= userToEdit.role === 'Investigator' ? 'selected' : '' %>>Investigator</option>
+                                        <option value="Supervisor" <%= userToEdit.role === 'Supervisor' ? 'selected' : '' %>>Supervisor</option>
+                                        <option value="Admin" <%= userToEdit.role === 'Admin' ? 'selected' : '' %>>System Administrator</option>
+                                    </select>
+                                </div>
+
+                                <div class="d-flex justify-content-end gap-2">
+                                    <a href="/admin/users" class="btn btn-light border px-4">Cancel</a>
+                                    <button type="submit" class="btn btn-navy px-4 fw-bold">
+                                        <i class="bi bi-save me-1"></i>Save Profile
                                     </button>
                                 </div>
                             </form>
                         </div>
                     </div>
+                </div>
 
+                <!-- Right Column: Password Reset & Account Status Controls -->
+                <div class="col-lg-4">
+                    <!-- Security / Password Reset -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-navy text-white py-3">
+                            <h6 class="mb-0 fw-bold"><i class="bi bi-shield-lock-fill me-2"></i>Reset Password</h6>
+                        </div>
+                        <div class="card-body p-4">
+                            <form action="/admin/users/<%= userToEdit.id %>/reset-password" method="POST">
+                                <div class="mb-3">
+                                    <label for="new_password" class="form-label small fw-semibold text-muted">New Password</label>
+                                    <input type="password" class="form-control" id="new_password" name="new_password" required minlength="6" placeholder="Min 6 characters">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="confirm_password" class="form-label small fw-semibold text-muted">Confirm New Password</label>
+                                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" required minlength="6" placeholder="Repeat new password">
+                                </div>
+                                <button type="submit" class="btn btn-warning w-100 fw-bold mt-2">
+                                    <i class="bi bi-key-fill me-1"></i>Update Password
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Account Status Toggle -->
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-navy text-white py-3">
+                            <h6 class="mb-0 fw-bold"><i class="bi bi-toggle-on me-2"></i>Account Status</h6>
+                        </div>
+                        <div class="card-body p-4 text-center">
+                            <p class="small text-muted mb-3">
+                                Current Status: 
+                                <strong class="<%= userToEdit.is_active ? 'text-success' : 'text-danger' %>">
+                                    <%= userToEdit.is_active ? 'Active' : 'Inactive / Suspended' %>
+                                </strong>
+                            </p>
+                            <form action="/admin/users/<%= userToEdit.id %>/toggle-status" method="POST">
+                                <button type="submit" class="btn <%= userToEdit.is_active ? 'btn-outline-danger' : 'btn-outline-success' %> w-100 fw-bold">
+                                    <i class="bi <%= userToEdit.is_active ? 'bi-person-x-fill' : 'bi-person-check-fill' %> me-1"></i>
+                                    <%= userToEdit.is_active ? 'Deactivate Account' : 'Activate Account' %>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </div>
+
         </div>
     </div>
 </div>

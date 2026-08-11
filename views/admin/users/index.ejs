@@ -8,119 +8,121 @@
 
         <div class="container-fluid py-4">
             
-            <!-- Page Header -->
-            <div class="d-flex align-items-center justify-content-between mb-4">
+            <!-- Header -->
+            <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
                 <div>
                     <h4 class="fw-bold mb-1" style="color: var(--mps-navy);">
-                        <i class="bi bi-people-fill me-2 text-warning"></i>Personnel & User Management
+                        <i class="bi bi-people-fill me-2 text-warning"></i>Personnel Directory
                     </h4>
-                    <p class="text-muted small mb-0">Manage system access, roles, and officer credentials for Limbe Station.</p>
+                    <p class="text-muted small mb-0">Search, filter, and edit user profiles or access permissions.</p>
                 </div>
-                <a href="/admin/users/create" class="btn btn-primary fw-bold px-3">
-                    <i class="bi bi-person-plus-fill me-2"></i>Register Personnel
+                <a href="/admin/users/create" class="btn btn-navy fw-bold px-3">
+                    <i class="bi bi-person-plus-fill me-2"></i>Register New Personnel
                 </a>
             </div>
 
-            <!-- Filter & Search Toolbar -->
-            <div class="card mb-4 border-0 shadow-sm">
+            <!-- Alerts -->
+            <% if (typeof success !== 'undefined' && success && success.length > 0) { %>
+                <div class="alert alert-success alert-dismissible fade show small mb-4" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i><%= success %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <% } %>
+
+            <% if (typeof error !== 'undefined' && error && error.length > 0) { %>
+                <div class="alert alert-danger alert-dismissible fade show small mb-4" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i><%= error %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <% } %>
+
+            <!-- Search & Filter Controls -->
+            <div class="card border-0 shadow-sm mb-4">
                 <div class="card-body p-3">
                     <form action="/admin/users" method="GET" class="row g-2 align-items-center">
-                        <div class="col-12 col-md-5">
+                        <div class="col-12 col-md-6">
                             <div class="input-group">
-                                <span class="input-group-text bg-light text-muted"><i class="bi bi-search"></i></span>
-                                <input type="text" name="search" class="form-control" placeholder="Search by Badge, Name, or Email..." value="<%= searchQuery %>">
+                                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                                <input type="text" name="search" class="form-control border-start-0" placeholder="Search by Badge, Name, or Email..." value="<%= searchQuery %>">
                             </div>
                         </div>
                         <div class="col-12 col-md-4">
                             <select name="role" class="form-select" onchange="this.form.submit()">
-                                <option value="">All System Roles</option>
-                                <option value="Admin" <%= roleFilter === 'Admin' ? 'selected' : '' %>>System Administrator</option>
-                                <option value="Supervisor" <%= roleFilter === 'Supervisor' ? 'selected' : '' %>>Supervisor / Commander</option>
-                                <option value="Investigator" <%= roleFilter === 'Investigator' ? 'selected' : '' %>>Investigator / Detective</option>
-                                <option value="Police Officer" <%= roleFilter === 'Police Officer' ? 'selected' : '' %>>Police Officer / Desk</option>
+                                <option value="">All Roles</option>
+                                <option value="Officer" <%= roleFilter === 'Officer' ? 'selected' : '' %>>Officer</option>
+                                <option value="Investigator" <%= roleFilter === 'Investigator' ? 'selected' : '' %>>Investigator</option>
+                                <option value="Supervisor" <%= roleFilter === 'Supervisor' ? 'selected' : '' %>>Supervisor</option>
+                                <option value="Admin" <%= roleFilter === 'Admin' ? 'selected' : '' %>>Admin</option>
                             </select>
                         </div>
-                        <div class="col-12 col-md-3 d-flex gap-2">
-                            <button type="submit" class="btn btn-secondary-mps w-100 fw-bold">Filter</button>
-                            <% if (searchQuery || roleFilter) { %>
-                                <a href="/admin/users" class="btn btn-outline-secondary">Clear</a>
-                            <% } %>
+                        <div class="col-12 col-md-2 d-grid">
+                            <button type="submit" class="btn btn-navy fw-bold">Search</button>
                         </div>
                     </form>
                 </div>
             </div>
 
             <!-- Users Table -->
-            <div class="table-responsive shadow-sm">
-                <table class="table align-middle mb-0">
-                    <thead>
-                        <tr>
-                            <th>Badge #</th>
-                            <th>Officer Name</th>
-                            <th>Rank</th>
-                            <th>Assigned Role</th>
-                            <th>Contact Email</th>
-                            <th>Status</th>
-                            <th class="text-end">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% if (users.length === 0) { %>
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="bg-light">
                             <tr>
-                                <td colspan="7" class="text-center py-4 text-muted">
-                                    <i class="bi bi-folder-x fs-3 d-block mb-2"></i>
-                                    No personnel records found.
-                                </td>
+                                <th>Badge #</th>
+                                <th>Rank & Name</th>
+                                <th>Contact Information</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th class="text-end">Actions</th>
                             </tr>
-                        <% } else { %>
-                            <% users.forEach(user => { %>
+                        </thead>
+                        <tbody>
+                            <% if (!users || users.length === 0) { %>
                                 <tr>
-                                    <td>
-                                        <span class="fw-bold font-monospace text-primary"><%= user.badge_number %></span>
-                                    </td>
-                                    <td class="fw-semibold">
-                                        <%= user.first_name %> <%= user.last_name %>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-light text-dark border"><%= user.rank_title || 'N/A' %></span>
-                                    </td>
-                                    <td>
-                                        <% if (user.role === 'Admin') { %>
-                                            <span class="badge bg-dark">System Admin</span>
-                                        <% } else if (user.role === 'Supervisor') { %>
-                                            <span class="badge bg-warning text-dark">Supervisor</span>
-                                        <% } else if (user.role === 'Investigator') { %>
-                                            <span class="badge bg-info text-dark">Investigator</span>
-                                        <% } else { %>
-                                            <span class="badge bg-secondary">Police Officer</span>
-                                        <% } %>
-                                    </td>
-                                    <td class="small text-muted"><%= user.email %></td>
-                                    <td>
-                                        <% if (user.is_active) { %>
-                                            <span class="badge-status badge-closed">Active</span>
-                                        <% } else { %>
-                                            <span class="badge-status badge-critical">Deactivated</span>
-                                        <% } %>
-                                    </td>
-                                    <td class="text-end">
-                                        <form action="/admin/users/<%= user.id %>/toggle-status" method="POST" class="d-inline">
-                                            <% if (user.is_active) { %>
-                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Deactivate Account">
-                                                    <i class="bi bi-person-x-fill me-1"></i>Deactivate
-                                                </button>
-                                            <% } else { %>
-                                                <button type="submit" class="btn btn-sm btn-outline-success" title="Activate Account">
-                                                    <i class="bi bi-person-check-fill me-1"></i>Activate
-                                                </button>
-                                            <% } %>
-                                        </form>
-                                    </td>
+                                    <td colspan="6" class="text-center py-4 text-muted">No personnel records found.</td>
                                 </tr>
-                            <% }); %>
-                        <% } %>
-                    </tbody>
-                </table>
+                            <% } else { %>
+                                <% users.forEach(user => { %>
+                                    <tr>
+                                        <td class="font-monospace fw-bold text-navy"><%= user.badge_number %></td>
+                                        <td>
+                                            <span class="fw-semibold"><%= user.first_name %> <%= user.last_name %></span>
+                                            <% if (user.rank_title) { %>
+                                                <span class="d-block text-muted fs-7"><%= user.rank_title %></span>
+                                            <% } %>
+                                        </td>
+                                        <td class="small">
+                                            <div><i class="bi bi-envelope me-1 text-muted"></i><%= user.email %></div>
+                                            <% if (user.phone_number) { %>
+                                                <div class="text-muted"><i class="bi bi-telephone me-1 text-muted"></i><%= user.phone_number %></div>
+                                            <% } %>
+                                        </td>
+                                        <td><span class="badge bg-light text-dark border"><%= user.role %></span></td>
+                                        <td>
+                                            <% if (user.is_active) { %>
+                                                <span class="badge bg-success bg-opacity-10 text-success fw-semibold">Active</span>
+                                            <% } else { %>
+                                                <span class="badge bg-danger bg-opacity-10 text-danger fw-semibold">Inactive</span>
+                                            <% } %>
+                                        </td>
+                                        <td class="text-end">
+                                            <div class="btn-group">
+                                                <a href="/admin/users/<%= user.id %>/edit" class="btn btn-sm btn-outline-primary" title="Edit Profile">
+                                                    <i class="bi bi-pencil-square me-1"></i>Edit
+                                                </a>
+                                                <form action="/admin/users/<%= user.id %>/toggle-status" method="POST" class="d-inline">
+                                                    <button type="submit" class="btn btn-sm <%= user.is_active ? 'btn-outline-danger' : 'btn-outline-success' %> ms-1" title="<%= user.is_active ? 'Deactivate' : 'Activate' %>">
+                                                        <i class="bi <%= user.is_active ? 'bi-person-x' : 'bi-person-check' %>"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
         </div>
