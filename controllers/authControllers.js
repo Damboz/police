@@ -3,10 +3,19 @@ const bcrypt = require('bcryptjs');
 
 /**
  * GET /auth/login
- * Render Login Page
+ * Render Login Page (Redirects active sessions to role-specific dashboards)
  */
 exports.getLogin = (req, res) => {
     if (req.session && req.session.user) {
+        const role = (req.session.user.role || '').toLowerCase();
+        const roleId = req.session.user.role_id;
+
+        if (role === 'station commander' || role === 'supervisor' || roleId === 2) {
+            return res.redirect('/supervisor/dashboard');
+        }
+        if (role === 'admin' || roleId === 1) {
+            return res.redirect('/admin/dashboard');
+        }
         return res.redirect('/dashboard');
     }
     
@@ -22,7 +31,7 @@ exports.getLogin = (req, res) => {
 
 /**
  * POST /auth/login
- * Authenticate Personnel & Create Session
+ * Authenticate Personnel & Create Session with Role-Based Redirection
  */
 exports.postLogin = async (req, res, next) => {
     try {
@@ -38,8 +47,9 @@ exports.postLogin = async (req, res, next) => {
 
         const identifier = badge_number.trim();
 
+        // Included role_id in SELECT query
         const [users] = await db.execute(`
-            SELECT id, badge_number, rank_title, first_name, last_name, email, password_hash, role, is_active 
+            SELECT id, badge_number, rank_title, first_name, last_name, email, password_hash, role, role_id, is_active 
             FROM users 
             WHERE badge_number = ? OR email = ?
         `, [identifier, identifier.toLowerCase()]);
@@ -71,6 +81,7 @@ exports.postLogin = async (req, res, next) => {
             });
         }
 
+        // Populate session with complete officer information
         req.session.user = {
             id: user.id,
             badge_number: user.badge_number,
@@ -78,7 +89,8 @@ exports.postLogin = async (req, res, next) => {
             first_name: user.first_name,
             last_name: user.last_name,
             email: user.email,
-            role: user.role
+            role: user.role,
+            role_id: user.role_id
         };
 
         await db.execute(
@@ -86,7 +98,20 @@ exports.postLogin = async (req, res, next) => {
             [user.id, 'USER_LOGIN', `Officer ${user.badge_number} logged in successfully.`]
         );
 
+        // Direct Supervisor / Station Commander to Supervisor Dashboard
+        const userRole = (user.role || '').toLowerCase();
+        if (userRole === 'station commander' || userRole === 'supervisor' || user.role_id === 2) {
+            return res.redirect('/supervisor/dashboard');
+        }
+
+        // Direct System Admin to Admin Dashboard
+        if (userRole === 'admin' || user.role_id === 1) {
+            return res.redirect('/admin/dashboard');
+        }
+
+        // Fallback for General Officers
         res.redirect('/dashboard');
+
     } catch (err) {
         next(err);
     }
@@ -151,7 +176,6 @@ exports.postChangePassword = async (req, res, next) => {
         const { current_password, new_password, confirm_password } = req.body;
         const userId = req.session.user.id;
 
-        // Validation: Required fields
         if (!current_password || !new_password || !confirm_password) {
             return res.render('auth/change-password', {
                 title: 'Change Password | Limbe Police CMS',
@@ -160,7 +184,6 @@ exports.postChangePassword = async (req, res, next) => {
             });
         }
 
-        // Validation: Password matching
         if (new_password !== confirm_password) {
             return res.render('auth/change-password', {
                 title: 'Change Password | Limbe Police CMS',
@@ -169,7 +192,6 @@ exports.postChangePassword = async (req, res, next) => {
             });
         }
 
-        // Validation: Minimum length
         if (new_password.length < 6) {
             return res.render('auth/change-password', {
                 title: 'Change Password | Limbe Police CMS',
@@ -178,7 +200,6 @@ exports.postChangePassword = async (req, res, next) => {
             });
         }
 
-        // Fetch user record
         const [users] = await db.execute('SELECT password_hash, badge_number FROM users WHERE id = ?', [userId]);
         if (users.length === 0) {
             return res.redirect('/auth/login');
@@ -186,7 +207,6 @@ exports.postChangePassword = async (req, res, next) => {
 
         const user = users[0];
 
-        // Verify existing password
         const isMatch = await bcrypt.compare(current_password, user.password_hash);
         if (!isMatch) {
             return res.render('auth/change-password', {
@@ -196,11 +216,9 @@ exports.postChangePassword = async (req, res, next) => {
             });
         }
 
-        // Hash and update to new password
         const hashedNewPassword = await bcrypt.hash(new_password, 10);
         await db.execute('UPDATE users SET password_hash = ? WHERE id = ?', [hashedNewPassword, userId]);
 
-        // Write entry to Audit Logs
         await db.execute(
             'INSERT INTO audit_logs (user_id, action, details) VALUES (?, ?, ?)',
             [userId, 'PASSWORD_CHANGED', `Officer ${user.badge_number} updated their password.`]

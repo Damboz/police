@@ -2,6 +2,28 @@ const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 
 /**
+ * Helper: Map incoming role strings to canonical DB ENUM and role_id FK
+ */
+const getRoleMapping = (roleInput) => {
+    const input = (roleInput || '').toString().toLowerCase().trim();
+
+    switch (input) {
+        case 'admin':
+            return { role: 'Admin', role_id: 1 };
+        case 'station commander':
+        case 'supervisor':
+            return { role: 'Station Commander', role_id: 2 };
+        case 'investigating officer':
+        case 'investigator':
+            return { role: 'Investigating Officer', role_id: 3 };
+        case 'counter/intake officer':
+        case 'officer':
+        default:
+            return { role: 'Counter/Intake Officer', role_id: 4 };
+    }
+};
+
+/**
  * GET /admin/dashboard
  * System Overview & Quick Admin Stats
  */
@@ -13,7 +35,7 @@ exports.getAdminDashboard = async (req, res, next) => {
 
         // Fetch recent personnel for quick dashboard editing
         const [users] = await db.execute(`
-            SELECT id, badge_number, rank_title, first_name, last_name, email, role, is_active 
+            SELECT id, badge_number, rank_title, first_name, last_name, email, role, role_id, is_active 
             FROM users 
             ORDER BY created_at DESC 
             LIMIT 5
@@ -50,18 +72,21 @@ exports.getUsers = async (req, res, next) => {
         const roleFilter = req.query.role || '';
 
         let query = `
-            SELECT id, badge_number, rank_title, first_name, last_name, email, role, phone_number, is_active, created_at
-            FROM users
-            WHERE (badge_number LIKE ? OR first_name LIKE ? OR last_name LIKE ? OR email LIKE ?)
+            SELECT u.id, u.badge_number, u.rank_title, u.first_name, u.last_name, u.email, 
+                   u.role, u.role_id, u.phone_number, u.is_active, u.created_at,
+                   su.name AS unit_name
+            FROM users u
+            LEFT JOIN station_units su ON u.unit_id = su.id
+            WHERE (u.badge_number LIKE ? OR u.first_name LIKE ? OR u.last_name LIKE ? OR u.email LIKE ?)
         `;
         let params = [search, search, search, search];
 
         if (roleFilter) {
-            query += ` AND role = ?`;
-            params.push(roleFilter);
+            query += ` AND (u.role = ? OR u.role_id = ?)`;
+            params.push(roleFilter, roleFilter);
         }
 
-        query += ` ORDER BY created_at DESC`;
+        query += ` ORDER BY u.created_at DESC`;
 
         const [users] = await db.execute(query, params);
 
@@ -82,25 +107,39 @@ exports.getUsers = async (req, res, next) => {
  * GET /admin/users/create
  * Form to Register New Personnel
  */
-exports.getCreateUser = (req, res) => {
-    res.render('admin/users/create', {
-        title: 'Register Personnel | Limbe Police CMS',
-        error: null,
-        formData: {}
-    });
+exports.getCreateUser = async (req, res, next) => {
+    try {
+        const [roles] = await db.execute('SELECT * FROM roles ORDER BY id ASC');
+        const [units] = await db.execute('SELECT * FROM station_units ORDER BY name ASC');
+
+        res.render('admin/users/create', {
+            title: 'Register Personnel | Limbe Police CMS',
+            roles,
+            units,
+            error: null,
+            formData: {}
+        });
+    } catch (err) {
+        next(err);
+    }
 };
 
 /**
  * POST /admin/users/create
- * Insert New Officer into Database
+ * Insert New Officer into Database with linked role_id and role
  */
 exports.postCreateUser = async (req, res, next) => {
     try {
-        const { badge_number, rank_title, first_name, last_name, email, phone_number, role, password } = req.body;
+        const { badge_number, rank_title, first_name, last_name, email, phone_number, role, unit_id, password } = req.body;
+
+        const [roles] = await db.execute('SELECT * FROM roles ORDER BY id ASC');
+        const [units] = await db.execute('SELECT * FROM station_units ORDER BY name ASC');
 
         if (!badge_number || !first_name || !last_name || !email || !role || !password) {
             return res.render('admin/users/create', {
                 title: 'Register Personnel | Limbe Police CMS',
+                roles,
+                units,
                 error: 'Please complete all required fields.',
                 formData: req.body
             });
@@ -114,16 +153,24 @@ exports.postCreateUser = async (req, res, next) => {
         if (existing.length > 0) {
             return res.render('admin/users/create', {
                 title: 'Register Personnel | Limbe Police CMS',
+                roles,
+                units,
                 error: 'An officer with this Badge Number or Email already exists.',
                 formData: req.body
             });
         }
 
+        // Map role name and role_id dynamically
+        const roleMap = getRoleMapping(role);
         const hashedPassword = await bcrypt.hash(password, 10);
+        const parsedUnitId = unit_id ? parseInt(unit_id, 10) : null;
 
         await db.execute(`
-            INSERT INTO users (badge_number, rank_title, first_name, last_name, email, phone_number, role, password_hash, is_active)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
+            INSERT INTO users (
+                badge_number, rank_title, first_name, last_name, email, 
+                phone_number, role, role_id, unit_id, password_hash, is_active
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
         `, [
             badge_number.trim(),
             rank_title ? rank_title.trim() : null,
@@ -131,7 +178,9 @@ exports.postCreateUser = async (req, res, next) => {
             last_name.trim(),
             email.trim().toLowerCase(),
             phone_number ? phone_number.trim() : null,
-            role,
+            roleMap.role,
+            roleMap.role_id,
+            parsedUnitId,
             hashedPassword
         ]);
 
@@ -139,7 +188,7 @@ exports.postCreateUser = async (req, res, next) => {
 
         await db.execute(
             'INSERT INTO audit_logs (user_id, action, details) VALUES (?, ?, ?)',
-            [adminId, 'USER_CREATED', `Created user ${badge_number.trim()} (${role})`]
+            [adminId, 'USER_CREATED', `Created user ${badge_number.trim()} with role ${roleMap.role} (Role ID: ${roleMap.role_id})`]
         );
 
         if (req.flash) {
@@ -160,7 +209,7 @@ exports.getEditUser = async (req, res, next) => {
     try {
         const userId = req.params.id;
         const [users] = await db.execute(
-            'SELECT id, badge_number, rank_title, first_name, last_name, email, phone_number, role, is_active FROM users WHERE id = ?',
+            'SELECT id, badge_number, rank_title, first_name, last_name, email, phone_number, role, role_id, unit_id, is_active FROM users WHERE id = ?',
             [userId]
         );
 
@@ -169,9 +218,14 @@ exports.getEditUser = async (req, res, next) => {
             return res.redirect('/admin/users');
         }
 
+        const [roles] = await db.execute('SELECT * FROM roles ORDER BY id ASC');
+        const [units] = await db.execute('SELECT * FROM station_units ORDER BY name ASC');
+
         res.render('admin/users/edit', {
             title: 'Edit Officer Profile | Limbe Police CMS',
             userToEdit: users[0],
+            roles,
+            units,
             success: req.flash ? req.flash('success') : null,
             error: req.flash ? req.flash('error') : null
         });
@@ -182,12 +236,12 @@ exports.getEditUser = async (req, res, next) => {
 
 /**
  * POST /admin/users/:id/edit
- * Update Officer Details & Role Assignment
+ * Update Officer Details & Role Assignment (syncs role and role_id)
  */
 exports.postEditUser = async (req, res, next) => {
     try {
         const userId = req.params.id;
-        const { rank_title, first_name, last_name, email, phone_number, role } = req.body;
+        const { rank_title, first_name, last_name, email, phone_number, role, unit_id } = req.body;
 
         if (!first_name || !last_name || !email || !role) {
             if (req.flash) req.flash('error', 'First Name, Last Name, Email, and Role are required fields.');
@@ -204,9 +258,13 @@ exports.postEditUser = async (req, res, next) => {
             return res.redirect(`/admin/users/${userId}/edit`);
         }
 
+        // Map role name and role_id dynamically
+        const roleMap = getRoleMapping(role);
+        const parsedUnitId = unit_id ? parseInt(unit_id, 10) : null;
+
         await db.execute(`
             UPDATE users 
-            SET rank_title = ?, first_name = ?, last_name = ?, email = ?, phone_number = ?, role = ?
+            SET rank_title = ?, first_name = ?, last_name = ?, email = ?, phone_number = ?, role = ?, role_id = ?, unit_id = ?
             WHERE id = ?
         `, [
             rank_title ? rank_title.trim() : null,
@@ -214,7 +272,9 @@ exports.postEditUser = async (req, res, next) => {
             last_name.trim(),
             email.trim().toLowerCase(),
             phone_number ? phone_number.trim() : null,
-            role,
+            roleMap.role,
+            roleMap.role_id,
+            parsedUnitId,
             userId
         ]);
 
@@ -222,7 +282,7 @@ exports.postEditUser = async (req, res, next) => {
 
         await db.execute(
             'INSERT INTO audit_logs (user_id, action, details) VALUES (?, ?, ?)',
-            [adminId, 'USER_UPDATED', `Updated details for User ID ${userId} (${first_name} ${last_name})`]
+            [adminId, 'USER_UPDATED', `Updated details for User ID ${userId} (${first_name} ${last_name}). Assigned Role: ${roleMap.role}`]
         );
 
         if (req.flash) {

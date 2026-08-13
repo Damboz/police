@@ -15,10 +15,16 @@ const session = require('express-session');
 const flash = require('connect-flash');
 const bcrypt = require('bcryptjs');
 
-// Load environment variables from .env
+// Load environment variables
 dotenv.config();
 
-// Load Database Connection Pool
+// Initialize Express Application
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// ============================================================================
+// 1. DATABASE CONNECTION POOL SETUP
+// ============================================================================
 let dbPool;
 try {
     dbPool = require('./config/db');
@@ -36,21 +42,21 @@ try {
     });
 }
 
-// Import Modular Routes
+// ============================================================================
+// 2. ROUTE IMPORTS
+// ============================================================================
 const adminRoutes = require('./routes/adminRoutes');
-
-const app = express();
-const PORT = process.env.PORT || 3000;
+const supervisorRoutes = require('./routes/supervisorRoutes');
 
 // ============================================================================
-// 1. VIEW ENGINE & MIDDLEWARE SETUP
+// 3. VIEW ENGINE & MIDDLEWARE SETUP
 // ============================================================================
 
-// Set EJS as template engine
+// Set EJS as view engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Serve static files from /public folder
+// Core Middlewares
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors());
 app.use(morgan('dev'));
@@ -68,10 +74,10 @@ app.use(session({
     }
 }));
 
-// Enable Flash Messages
+// Flash Messages
 app.use(flash());
 
-// Pass global variables to all EJS templates
+// Pass Global Variables to Views
 app.use((req, res, next) => {
     res.locals.session = req.session;
     res.locals.currentUser = req.session ? req.session.user : null;
@@ -80,7 +86,7 @@ app.use((req, res, next) => {
     next();
 });
 
-// Route Guard: Ensures user is authenticated
+// Route Guard Middleware
 const isAuthenticated = (req, res, next) => {
     if (req.session && req.session.user) {
         return next();
@@ -88,9 +94,8 @@ const isAuthenticated = (req, res, next) => {
     res.redirect('/auth/login');
 };
 
-
 // ============================================================================
-// 2. WEB APPLICATION ROUTES
+// 4. WEB APPLICATION ROUTES
 // ============================================================================
 
 // Root Route
@@ -117,7 +122,7 @@ app.get('/auth/login', (req, res) => {
     });
 });
 
-// POST /auth/login - Process User Sign-In
+// POST /auth/login - Process Sign-In
 app.post('/auth/login', async (req, res) => {
     const { badge_number, password } = req.body;
 
@@ -215,12 +220,10 @@ app.get('/auth/logout', async (req, res) => {
     }
 });
 
-
 // ----------------------------------------------------------------------------
 // B. DASHBOARD ROUTE
 // ----------------------------------------------------------------------------
 
-// GET /dashboard - Main Station Dashboard
 app.get('/dashboard', isAuthenticated, async (req, res) => {
     try {
         const [[{ totalCases }]] = await dbPool.execute('SELECT COUNT(*) AS totalCases FROM cases');
@@ -228,10 +231,8 @@ app.get('/dashboard', isAuthenticated, async (req, res) => {
         const [[{ totalEvidence }]] = await dbPool.execute('SELECT COUNT(*) AS totalEvidence FROM evidence');
         const [[{ activeUsers }]] = await dbPool.execute('SELECT COUNT(*) AS activeUsers FROM users WHERE is_active = 1');
 
-        // Fetch recent cases list
         const [recentCases] = await dbPool.execute('SELECT * FROM cases ORDER BY created_at DESC LIMIT 5');
 
-        // Fetch recent audit logs required by dashboard
         const [recentLogs] = await dbPool.execute(`
             SELECT a.*, u.badge_number, u.rank_title, u.first_name, u.last_name 
             FROM audit_logs a 
@@ -251,25 +252,21 @@ app.get('/dashboard', isAuthenticated, async (req, res) => {
     }
 });
 
-
 // ----------------------------------------------------------------------------
-// C. ADMIN ROUTES (MOUNTED ROUTER)
-// Routes: /admin/dashboard, /admin/users, /admin/users/create, /admin/audit-logs
+// C. MOUNTED MODULAR ROUTERS
 // ----------------------------------------------------------------------------
 app.use('/admin', adminRoutes);
-
+app.use('/supervisor', supervisorRoutes);
 
 // ----------------------------------------------------------------------------
 // D. REST API ENDPOINTS
 // ----------------------------------------------------------------------------
-
 app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'UP', system: 'Limbe Police Station CMS' });
 });
 
-
 // ============================================================================
-// 3. ERROR HANDLERS
+// 5. ERROR HANDLERS & SERVER STARTUP
 // ============================================================================
 
 // 404 Route Handler
@@ -283,14 +280,15 @@ app.use((req, res) => {
     `);
 });
 
-// Global Exception Handler
+// Global Error Handler
 app.use((err, req, res, next) => {
     console.error('Unhandled System Error:', err);
     res.status(500).send('An unexpected system error occurred.');
 });
 
+// Start Server
 app.listen(PORT, () => {
-   console.log(`Limbe Police Station Web Portal Live: http://localhost:${PORT}`);
+    console.log(`Limbe Police Station Web Portal Live: http://localhost:${PORT}`);
 });
 
 module.exports = app;
