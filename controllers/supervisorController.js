@@ -15,7 +15,7 @@ exports.getDashboard = async (req, res, next) => {
             FROM cases
         `);
 
-        // 2. Unassigned Cases (Requires Assignment)
+        
         const [unassignedCases] = await db.execute(`
             SELECT 
                 c.id, 
