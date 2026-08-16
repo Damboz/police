@@ -13,7 +13,6 @@ const morgan = require('morgan');
 const dotenv = require('dotenv');
 const session = require('express-session');
 const flash = require('connect-flash');
-const bcrypt = require('bcryptjs');
 
 // Load environment variables
 dotenv.config();
@@ -45,8 +44,10 @@ try {
 // ============================================================================
 // 2. ROUTE IMPORTS
 // ============================================================================
+const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const supervisorRoutes = require('./routes/supervisorRoutes');
+const caseRoutes = require('./routes/caseRoutes');
 
 // ============================================================================
 // 3. VIEW ENGINE & MIDDLEWARE SETUP
@@ -109,147 +110,31 @@ app.get('/', (req, res) => {
 // ----------------------------------------------------------------------------
 // A. AUTHENTICATION ROUTES
 // ----------------------------------------------------------------------------
+// Handled entirely by routes/authRoutes.js -> controllers/authController.js
+// (login, logout, change-password, and role-based post-login redirection).
+// The previous inline app.get/app.post handlers here were duplicating and
+// overriding that controller logic, which is why role-based redirects were
+// never firing. Removed in favor of the single source of truth below.
+app.use('/auth', authRoutes);
 
-// GET /auth/login - Render Login View
-app.get('/auth/login', (req, res) => {
-    if (req.session && req.session.user) {
-        return res.redirect('/dashboard');
+// ----------------------------------------------------------------------------
+// B. DASHBOARD ROUTE (role-aware redirect)
+// ----------------------------------------------------------------------------
+app.get('/dashboard', isAuthenticated, (req, res) => {
+    const role = (req.session.user.role || '').toLowerCase();
+    const roleId = req.session.user.role_id;
+
+    if (role === 'admin' || roleId === 1) {
+        return res.redirect('/admin/dashboard');
     }
-    res.render('auth/login', {
-        title: 'Login | Limbe Police Station CMS',
-        error: req.flash('error').length > 0 ? req.flash('error') : null,
-        success: req.flash('success').length > 0 ? req.flash('success') : null
+    if (role === 'station commander' || role === 'supervisor' || roleId === 2) {
+        return res.redirect('/supervisor/dashboard');
+    }
+
+    // Fallback for Investigating Officer / Counter-Intake Officer
+    return res.render('general/dashboard', {
+        title: 'Dashboard | Limbe Police CMS'
     });
-});
-
-// POST /auth/login - Process Sign-In
-app.post('/auth/login', async (req, res) => {
-    const { badge_number, password } = req.body;
-
-    if (!badge_number || !password) {
-        return res.render('auth/login', {
-            title: 'Login | Limbe Police Station CMS',
-            error: 'Please enter both Badge/Email and Password.',
-            success: null
-        });
-    }
-
-    try {
-        const identifier = badge_number.trim();
-        const [users] = await dbPool.execute(
-            'SELECT * FROM users WHERE badge_number = ? OR email = ?',
-            [identifier, identifier.toLowerCase()]
-        );
-
-        if (users.length === 0) {
-            return res.render('auth/login', {
-                title: 'Login | Limbe Police Station CMS',
-                error: 'Invalid credentials provided.',
-                success: null
-            });
-        }
-
-        const user = users[0];
-
-        if (!user.is_active) {
-            return res.render('auth/login', {
-                title: 'Login | Limbe Police Station CMS',
-                error: 'Account deactivated. Please contact administrator.',
-                success: null
-            });
-        }
-
-        const isMatch = await bcrypt.compare(password, user.password_hash);
-        if (!isMatch) {
-            return res.render('auth/login', {
-                title: 'Login | Limbe Police Station CMS',
-                error: 'Invalid credentials provided.',
-                success: null
-            });
-        }
-
-        // Set session user object
-        req.session.user = {
-            id: user.id,
-            badge_number: user.badge_number,
-            rank_title: user.rank_title,
-            first_name: user.first_name,
-            last_name: user.last_name,
-            email: user.email,
-            role: user.role
-        };
-
-        // Write entry to audit log
-        await dbPool.execute(
-            'INSERT INTO audit_logs (user_id, action, details) VALUES (?, ?, ?)',
-            [user.id, 'USER_LOGIN', `Officer ${user.badge_number} logged into web portal.`]
-        );
-
-        res.redirect('/dashboard');
-
-    } catch (err) {
-        console.error('Login Error:', err);
-        res.render('auth/login', {
-            title: 'Login | Limbe Police Station CMS',
-            error: 'Database error encountered during sign-in.',
-            success: null
-        });
-    }
-});
-
-// GET /auth/logout - Destroy Session
-app.get('/auth/logout', async (req, res) => {
-    if (req.session && req.session.user) {
-        const userId = req.session.user.id;
-        const badge = req.session.user.badge_number;
-
-        try {
-            await dbPool.execute(
-                'INSERT INTO audit_logs (user_id, action, details) VALUES (?, ?, ?)',
-                [userId, 'USER_LOGOUT', `Officer ${badge} logged out.`]
-            );
-        } catch (e) {
-            console.error('Logout audit logging failed:', e);
-        }
-
-        req.session.destroy(() => {
-            res.redirect('/auth/login');
-        });
-    } else {
-        res.redirect('/auth/login');
-    }
-});
-
-// ----------------------------------------------------------------------------
-// B. DASHBOARD ROUTE
-// ----------------------------------------------------------------------------
-
-app.get('/dashboard', isAuthenticated, async (req, res) => {
-    try {
-        const [[{ totalCases }]] = await dbPool.execute('SELECT COUNT(*) AS totalCases FROM cases');
-        const [[{ openCases }]] = await dbPool.execute("SELECT COUNT(*) AS openCases FROM cases WHERE status != 'Closed'");
-        const [[{ totalEvidence }]] = await dbPool.execute('SELECT COUNT(*) AS totalEvidence FROM evidence');
-        const [[{ activeUsers }]] = await dbPool.execute('SELECT COUNT(*) AS activeUsers FROM users WHERE is_active = 1');
-
-        const [recentCases] = await dbPool.execute('SELECT * FROM cases ORDER BY created_at DESC LIMIT 5');
-
-        const [recentLogs] = await dbPool.execute(`
-            SELECT a.*, u.badge_number, u.rank_title, u.first_name, u.last_name 
-            FROM audit_logs a 
-            LEFT JOIN users u ON a.user_id = u.id 
-            ORDER BY a.created_at DESC LIMIT 5
-        `);
-
-        res.render('admin/dashboard', {
-            title: 'Station Dashboard | Limbe Police CMS',
-            stats: { totalCases, openCases, totalEvidence, activeUsers },
-            recentCases,
-            recentLogs
-        });
-    } catch (err) {
-        console.error('Dashboard Error:', err);
-        res.status(500).send(`<h2>Server Error</h2><p>${err.message}</p>`);
-    }
 });
 
 // ----------------------------------------------------------------------------
@@ -257,6 +142,7 @@ app.get('/dashboard', isAuthenticated, async (req, res) => {
 // ----------------------------------------------------------------------------
 app.use('/admin', adminRoutes);
 app.use('/supervisor', supervisorRoutes);
+app.use('/cases', caseRoutes);
 
 // ----------------------------------------------------------------------------
 // D. REST API ENDPOINTS

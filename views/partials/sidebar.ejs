@@ -1,6 +1,7 @@
 <% 
   const activeUser = locals.currentUser || (locals.session ? locals.session.user : null); 
   const currentPath = locals.currentPath || ''; 
+  const role = activeUser ? activeUser.role : '';
 %>
 
 <aside class="sidebar">
@@ -21,15 +22,15 @@
     <ul class="sidebar-menu">
         <li class="sidebar-heading">Core Operations</li>
 
-        <!-- Main Dashboard Navigation -->
+        <!-- Dashboard: every role lands here, backend redirects to their specific view -->
         <li>
-            <a href="/dashboard" class="sidebar-link <%= currentPath === '/dashboard' ? 'active' : '' %>">
+            <a href="/dashboard" class="sidebar-link <%= (currentPath === '/dashboard' || currentPath === '/supervisor/dashboard' || currentPath === '/admin/dashboard') ? 'active' : '' %>">
                 <i class="bi bi-speedometer2"></i>
                 <span>Dashboard</span>
             </a>
         </li>
 
-        <!-- Case Register (Accessible to all authenticated roles) -->
+        <!-- Case Register: all four roles can register/view cases -->
         <li>
             <a href="/cases" class="sidebar-link <%= currentPath.startsWith('/cases') ? 'active' : '' %>">
                 <i class="bi bi-folder2-open"></i>
@@ -37,8 +38,9 @@
             </a>
         </li>
 
-        <!-- Evidence Ledger (Investigator, Supervisor & Admin) -->
-        <% if (activeUser && ['Investigator', 'Supervisor', 'Admin'].includes(activeUser.role)) { %>
+        <!-- Evidence Ledger: Investigating Officer (assigned cases) & Station Commander (read-only oversight).
+             Admin is intentionally excluded — casework tools are outside the System Administrator's role. -->
+        <% if (role === 'Investigating Officer' || role === 'Station Commander') { %>
             <li>
                 <a href="/evidence" class="sidebar-link <%= currentPath.startsWith('/evidence') ? 'active' : '' %>">
                     <i class="bi bi-box-seam"></i>
@@ -47,18 +49,41 @@
             </li>
         <% } %>
 
-        <!-- Crime Analytics & Hotspots (Supervisor & Admin) -->
-        <% if (activeUser && ['Supervisor', 'Admin'].includes(activeUser.role)) { %>
+        <!-- Command & Oversight: Station Commander & Admin only -->
+        <% if (role === 'Station Commander' || role === 'Admin') { %>
+            <li class="sidebar-heading mt-3">Command & Oversight</li>
+
             <li>
-                <a href="/analytics" class="sidebar-link <%= currentPath.startsWith('/analytics') ? 'active' : '' %>">
+                <a href="/supervisor/analytics" class="sidebar-link <%= currentPath.startsWith('/supervisor/analytics') ? 'active' : '' %>">
                     <i class="bi bi-graph-up-arrow"></i>
                     <span>Analytics & Hotspots</span>
                 </a>
             </li>
+
+            <li>
+                <a href="/supervisor/reports/station-performance" class="sidebar-link">
+                    <i class="bi bi-file-earmark-bar-graph"></i>
+                    <span>Station Performance PDF</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="/supervisor/reports/crime-statistics" class="sidebar-link">
+                    <i class="bi bi-file-earmark-text"></i>
+                    <span>Crime Statistics PDF</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="/supervisor/reports/officer-productivity" class="sidebar-link">
+                    <i class="bi bi-file-earmark-person"></i>
+                    <span>Officer Productivity PDF</span>
+                </a>
+            </li>
         <% } %>
 
-        <!-- System Administrator Operations -->
-        <% if (activeUser && activeUser.role === 'Admin') { %>
+        <!-- System Administrator Operations: Admin only -->
+        <% if (role === 'Admin') { %>
             <li class="sidebar-heading mt-3">Administration</li>
             
             <li>
@@ -85,7 +110,7 @@
 
         <li class="sidebar-heading mt-3">Account</li>
 
-        <!-- User Settings & Auth Controls -->
+        <!-- User Settings & Auth Controls: every role -->
         <li>
             <a href="/auth/change-password" class="sidebar-link <%= currentPath === '/auth/change-password' ? 'active' : '' %>">
                 <i class="bi bi-key-fill text-warning"></i>
@@ -106,10 +131,12 @@
         <% if (activeUser) { %>
             <div class="d-flex align-items-center mb-2">
                 <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-2" style="width: 32px; height: 32px; font-size: 0.8rem;">
-                    <%= activeUser.name ? activeUser.name.charAt(0).toUpperCase() : 'P' %>
+                    <%= activeUser.first_name ? activeUser.first_name.charAt(0).toUpperCase() : 'P' %>
                 </div>
                 <div class="overflow-hidden">
-                    <div class="text-white text-truncate fw-semibold" style="font-size: 0.825rem;"><%= activeUser.name || 'Officer' %></div>
+                    <div class="text-white text-truncate fw-semibold" style="font-size: 0.825rem;">
+                        <%= activeUser.first_name ? (activeUser.first_name + ' ' + activeUser.last_name) : 'Officer' %>
+                    </div>
                     <div class="text-warning text-truncate" style="font-size: 0.7rem;"><%= activeUser.role %></div>
                 </div>
             </div>

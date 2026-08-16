@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 // Updated controller import matching your project structure
-const adminController = require('../controllers/adminControllers');
+const adminController = require('../controllers/adminController');
 const { isAuthenticated, isAdmin } = require('../middleware/authMiddleware');
 
 // Protect all admin endpoints with authentication & role checks

@@ -112,9 +112,13 @@ a:hover {
   display: flex;
   flex-direction: column;
   background-color: var(--mps-bg-page);
+  /* Offsets content below the fixed topbar so nothing renders underneath it */
+  padding-top: var(--mps-topbar-height);
+  /* Offsets content past the fixed sidebar, since it's removed from normal flow below */
+  margin-left: var(--mps-sidebar-width);
 }
 
-/* Top Sticky Navigation Bar */
+/* Top Static (Fixed) Navigation Bar */
 .topbar {
   height: var(--mps-topbar-height);
   background-color: var(--mps-bg-card);
@@ -123,9 +127,11 @@ a:hover {
   align-items: center;
   justify-content: space-between;
   padding: 0 1.5rem;
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 1020;
+  left: var(--mps-sidebar-width);
+  right: 0;
+  z-index: 1030;
 }
 
 .content-body {
@@ -159,8 +165,14 @@ a:hover {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
   transition: width 0.2s ease-in-out;
+  /* Pinned to the viewport with its own independent scrollbar, separate from main content */
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 1040;
 }
 
 /* Header/Brand Section */
@@ -645,12 +657,21 @@ a:hover {
   }
 
   .sidebar {
+    position: static;
     width: 100%;
+    height: auto;
     min-height: auto;
+    overflow-y: visible;
   }
 
   .topbar {
+    left: 0;
     padding: 0 1rem;
+  }
+
+  .main-content {
+    margin-left: 0;
+    padding-top: var(--mps-topbar-height);
   }
 
   .content-body {

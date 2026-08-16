@@ -1,0 +1,162 @@
+<%- include('../partials/header') %>
+
+<div class="app-wrapper">
+    <%- include('../partials/sidebar') %>
+
+    <div class="main-content">
+        <%- include('../partials/topbar') %>
+
+        <div class="container-fluid py-4">
+
+            <!-- Page Header -->
+            <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+                <div>
+                    <h4 class="fw-bold mb-1" style="color: var(--mps-navy);">
+                        <i class="bi bi-plus-circle-fill me-2 text-warning"></i>Register New Case
+                    </h4>
+                    <p class="text-muted small mb-0">Record a new Occurrence Book (OB) entry from a walk-in complaint or field report.</p>
+                </div>
+                <a href="/cases" class="btn btn-outline-navy btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i>Back to Case Register
+                </a>
+            </div>
+
+            <!-- Flash Alert Messages -->
+            <% if (typeof error !== 'undefined' && error && error.length > 0) { %>
+                <div class="alert alert-danger alert-dismissible fade show small mb-4" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i><%= error %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <% } %>
+
+            <form action="/cases" method="POST">
+                <div class="row g-4">
+
+                    <!-- Complainant Information -->
+                    <div class="col-lg-6">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-header bg-navy text-white py-3">
+                                <h6 class="mb-0 fw-bold">
+                                    <i class="bi bi-person-fill me-2 text-warning"></i>Complainant Information
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="complainant_name" class="form-label">Full Name <span class="text-danger">*</span></label>
+                                    <input type="text" name="complainant_name" id="complainant_name" class="form-control" required>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-sm-6 mb-3">
+                                        <label for="complainant_phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                                        <input type="text" name="complainant_phone" id="complainant_phone" class="form-control" required>
+                                    </div>
+                                    <div class="col-sm-6 mb-3">
+                                        <label for="complainant_gender" class="form-label">Gender</label>
+                                        <select name="complainant_gender" id="complainant_gender" class="form-select">
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                            <option value="Other" selected>Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="complainant_id_number" class="form-label">National ID Number</label>
+                                    <input type="text" name="complainant_id_number" id="complainant_id_number" class="form-control" placeholder="Optional">
+                                </div>
+
+                                <div class="mb-0">
+                                    <label for="complainant_address" class="form-label">Address</label>
+                                    <textarea name="complainant_address" id="complainant_address" rows="2" class="form-control" placeholder="Optional"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Classification & Assignment -->
+                    <div class="col-lg-6">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-header bg-navy text-white py-3">
+                                <h6 class="mb-0 fw-bold">
+                                    <i class="bi bi-tags-fill me-2 text-warning"></i>Classification
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="category_id" class="form-label">Crime Category <span class="text-danger">*</span></label>
+                                    <select name="category_id" id="category_id" class="form-select" required>
+                                        <option value="" disabled selected>-- Select Category --</option>
+                                        <% categories.forEach(cat => { %>
+                                            <option value="<%= cat.id %>"><%= cat.name %> (<%= cat.severity_level %>)</option>
+                                        <% }) %>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="unit_id" class="form-label">Assigned Unit <span class="text-danger">*</span></label>
+                                    <select name="unit_id" id="unit_id" class="form-select" required>
+                                        <option value="" disabled selected>-- Select Unit --</option>
+                                        <% units.forEach(unit => { %>
+                                            <option value="<%= unit.id %>"><%= unit.code %> — <%= unit.name %></option>
+                                        <% }) %>
+                                    </select>
+                                </div>
+
+                                <div class="mb-0">
+                                    <label for="priority" class="form-label">Priority Level</label>
+                                    <select name="priority" id="priority" class="form-select">
+                                        <option value="Low">Low</option>
+                                        <option value="Medium" selected>Medium</option>
+                                        <option value="High">High</option>
+                                        <option value="Critical">Critical</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Incident Details -->
+                    <div class="col-12">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-navy text-white py-3">
+                                <h6 class="mb-0 fw-bold">
+                                    <i class="bi bi-geo-alt-fill me-2 text-warning"></i>Incident Details
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="incident_location" class="form-label">Incident Location <span class="text-danger">*</span></label>
+                                        <input type="text" name="incident_location" id="incident_location" class="form-control" placeholder="e.g. Limbe Market, Chirimba Road" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="incident_datetime" class="form-label">Date & Time of Incident</label>
+                                        <input type="datetime-local" name="incident_datetime" id="incident_datetime" class="form-control">
+                                    </div>
+                                </div>
+
+                                <div class="mb-0">
+                                    <label for="incident_details" class="form-label">Incident Narrative <span class="text-danger">*</span></label>
+                                    <textarea name="incident_details" id="incident_details" rows="5" class="form-control" placeholder="Describe what was reported: what happened, who was involved, and any immediate observations." required></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="col-12 d-flex justify-content-end gap-2">
+                        <a href="/cases" class="btn btn-outline-navy">Cancel</a>
+                        <button type="submit" class="btn btn-navy px-4">
+                            <i class="bi bi-check-lg me-1"></i>Register Case
+                        </button>
+                    </div>
+
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
