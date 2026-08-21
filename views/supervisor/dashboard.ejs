@@ -214,9 +214,9 @@
                                                     <small class="text-muted d-block text-truncate"><%= item.title %></small>
                                                 </td>
                                                 <td>
-                                                    <% if (item.status === 'Closed') { %>
+                                                    <% if (item.requested_status === 'Closed') { %>
                                                         <span class="badge badge-case-closed"><i class="bi bi-lock-fill me-1"></i>Closure</span>
-                                                    <% } else if (item.status === 'Court Pending') { %>
+                                                    <% } else if (item.requested_status === 'Court Pending') { %>
                                                         <span class="badge badge-case-investigation"><i class="bi bi-bank2 me-1"></i>Court</span>
                                                     <% } %>
                                                 </td>
@@ -228,7 +228,7 @@
                                                             data-bs-target="#approvalModal"
                                                             data-case-id="<%= item.id %>"
                                                             data-case-ref="<%= item.case_number %>"
-                                                            data-requested-status="<%= item.status %>">
+                                                            data-requested-status="<%= item.requested_status %>">
                                                         Review
                                                     </button>
                                                 </td>

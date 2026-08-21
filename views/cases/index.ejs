@@ -57,12 +57,13 @@
                                 <th>Intake Officer</th>
                                 <th>Assigned To</th>
                                 <th>Date Registered</th>
+                                <th class="text-end">Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             <% if (cases.length === 0) { %>
                                 <tr>
-                                    <td colspan="9" class="text-center py-5 text-muted">
+                                    <td colspan="10" class="text-center py-5 text-muted">
                                         <i class="bi bi-inbox fs-2 d-block mb-2"></i>
                                         No cases have been registered yet.
                                         <br>
@@ -111,6 +112,11 @@
                                             <% } %>
                                         </td>
                                         <td class="small text-muted"><%= new Date(item.created_at).toLocaleDateString() %></td>
+                                        <td class="text-end">
+                                            <a href="/cases/<%= item.id %>" class="btn btn-sm btn-outline-navy">
+                                                <i class="bi bi-eye-fill me-1"></i>View
+                                            </a>
+                                        </td>
                                     </tr>
                                 <% }) %>
                             <% } %>

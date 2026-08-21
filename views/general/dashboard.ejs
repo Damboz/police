@@ -1,0 +1,269 @@
+<%- include('../partials/header') %>
+
+<div class="app-wrapper">
+    <%- include('../partials/sidebar') %>
+
+    <div class="main-content">
+        <%- include('../partials/topbar') %>
+
+        <div class="container-fluid py-4">
+
+            <% if (role === 'Investigating Officer') { %>
+
+                <!-- ==================== INVESTIGATING OFFICER VIEW ==================== -->
+                <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+                    <div>
+                        <h4 class="fw-bold mb-1" style="color: var(--mps-navy);">
+                            <i class="bi bi-person-badge-fill me-2 text-warning"></i>My Assigned Cases
+                        </h4>
+                        <p class="text-muted small mb-0">Active investigations, evidence, and case timelines assigned to you.</p>
+                    </div>
+                </div>
+
+                <% if (typeof success !== 'undefined' && success && success.length > 0) { %>
+                    <div class="alert alert-success alert-dismissible fade show small mb-4" role="alert">
+                        <i class="bi bi-check-circle-fill me-2"></i><%= success %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <% } %>
+                <% if (typeof error !== 'undefined' && error && error.length > 0) { %>
+                    <div class="alert alert-danger alert-dismissible fade show small mb-4" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i><%= error %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <% } %>
+
+                <!-- KPI Cards -->
+                <div class="row g-3 mb-4">
+                    <div class="col-12 col-sm-6 col-xl-3">
+                        <div class="card border-0 shadow-sm p-3">
+                            <div class="metric-card">
+                                <div>
+                                    <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Active Cases</span>
+                                    <h3 class="fw-bold mb-0" style="color: var(--mps-navy);"><%= kpi.active %></h3>
+                                </div>
+                                <div class="metric-icon navy"><i class="bi bi-search"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-xl-3">
+                        <div class="card border-0 shadow-sm p-3">
+                            <div class="metric-card">
+                                <div>
+                                    <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Overdue (<%= overdueDaysThreshold %>+ days)</span>
+                                    <h3 class="fw-bold mb-0" style="color: var(--mps-danger);"><%= kpi.overdue %></h3>
+                                </div>
+                                <div class="metric-icon danger"><i class="bi bi-alarm-fill"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-xl-3">
+                        <div class="card border-0 shadow-sm p-3">
+                            <div class="metric-card">
+                                <div>
+                                    <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Pending Requests</span>
+                                    <h3 class="fw-bold mb-0" style="color: var(--mps-info);"><%= kpi.pendingRequest %></h3>
+                                </div>
+                                <div class="metric-icon navy"><i class="bi bi-hourglass-split"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-xl-3">
+                        <div class="card border-0 shadow-sm p-3">
+                            <div class="metric-card">
+                                <div>
+                                    <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Closed (All Time)</span>
+                                    <h3 class="fw-bold mb-0" style="color: var(--mps-success);"><%= kpi.closed %></h3>
+                                </div>
+                                <div class="metric-icon success"><i class="bi bi-check-circle-fill"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assigned Cases Table -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-navy text-white d-flex align-items-center justify-content-between py-3">
+                        <h6 class="mb-0 fw-bold">
+                            <i class="bi bi-folder2-open me-2 text-warning"></i>Assigned Cases
+                        </h6>
+                        <span class="badge bg-gold text-dark"><%= kpi.totalAssigned %> Total</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Case Ref</th>
+                                    <th>Title & Category</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Days Open</th>
+                                    <th class="text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (assignedCases.length === 0) { %>
+                                    <tr>
+                                        <td colspan="6" class="text-center py-5 text-muted">
+                                            <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                            No cases assigned to you yet.
+                                        </td>
+                                    </tr>
+                                <% } else { %>
+                                    <% assignedCases.forEach(item => { %>
+                                        <tr>
+                                            <td class="fw-bold font-monospace" style="color: var(--mps-navy);">#<%= item.ob_number %></td>
+                                            <td>
+                                                <div class="fw-semibold text-dark"><%= item.title %></div>
+                                                <small class="text-muted"><%= item.crime_category %></small>
+                                            </td>
+                                            <td>
+                                                <% if (item.priority === 'Critical') { %>
+                                                    <span class="badge badge-priority-critical">CRITICAL</span>
+                                                <% } else if (item.priority === 'High') { %>
+                                                    <span class="badge badge-priority-high">HIGH</span>
+                                                <% } else if (item.priority === 'Medium') { %>
+                                                    <span class="badge badge-priority-medium">MEDIUM</span>
+                                                <% } else { %>
+                                                    <span class="badge badge-priority-low">LOW</span>
+                                                <% } %>
+                                            </td>
+                                            <td>
+                                                <% if (item.requested_status) { %>
+                                                    <span class="badge bg-light text-dark border"><i class="bi bi-hourglass-split me-1"></i>Pending: <%= item.requested_status %></span>
+                                                <% } else if (item.status === 'Closed') { %>
+                                                    <span class="badge badge-case-closed">Closed</span>
+                                                <% } else { %>
+                                                    <span class="badge badge-case-investigation">Under Investigation</span>
+                                                <% } %>
+                                            </td>
+                                            <td>
+                                                <% if (item.status === 'Under Investigation' && item.days_open > overdueDaysThreshold) { %>
+                                                    <span class="badge badge-priority-critical"><%= item.days_open %> days</span>
+                                                <% } else { %>
+                                                    <span class="text-muted small"><%= item.days_open %> days</span>
+                                                <% } %>
+                                            </td>
+                                            <td class="text-end">
+                                                <a href="/cases/<%= item.id %>" class="btn btn-sm btn-navy">
+                                                    <i class="bi bi-folder2-open me-1"></i>Open Case
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            <% } else { %>
+
+                <!-- ==================== COUNTER / INTAKE OFFICER VIEW ==================== -->
+                <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+                    <div>
+                        <h4 class="fw-bold mb-1" style="color: var(--mps-navy);">
+                            <i class="bi bi-clipboard-plus-fill me-2 text-warning"></i>Intake Desk
+                        </h4>
+                        <p class="text-muted small mb-0">Record walk-in complaints and field reports as Occurrence Book entries.</p>
+                    </div>
+                    <a href="/cases/new" class="btn btn-navy">
+                        <i class="bi bi-plus-circle-fill me-1"></i>Register New Case
+                    </a>
+                </div>
+
+                <% if (typeof success !== 'undefined' && success && success.length > 0) { %>
+                    <div class="alert alert-success alert-dismissible fade show small mb-4" role="alert">
+                        <i class="bi bi-check-circle-fill me-2"></i><%= success %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <% } %>
+                <% if (typeof error !== 'undefined' && error && error.length > 0) { %>
+                    <div class="alert alert-danger alert-dismissible fade show small mb-4" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i><%= error %>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <% } %>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-12 col-sm-6 col-xl-3">
+                        <div class="card border-0 shadow-sm p-3">
+                            <div class="metric-card">
+                                <div>
+                                    <span class="text-muted small fw-semibold text-uppercase d-block mb-1">Cases Registered Today</span>
+                                    <h3 class="fw-bold mb-0" style="color: var(--mps-navy);"><%= todayIntakeCount %></h3>
+                                </div>
+                                <div class="metric-icon navy"><i class="bi bi-journal-plus"></i></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-navy text-white py-3">
+                        <h6 class="mb-0 fw-bold">
+                            <i class="bi bi-clock-history me-2 text-warning"></i>Your Recent Intake Entries
+                        </h6>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>OB Number</th>
+                                    <th>Complainant</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (recentIntakes.length === 0) { %>
+                                    <tr>
+                                        <td colspan="5" class="text-center py-5 text-muted">
+                                            <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                            You haven't registered any cases yet.
+                                            <br>
+                                            <a href="/cases/new" class="small">Register your first case &rarr;</a>
+                                        </td>
+                                    </tr>
+                                <% } else { %>
+                                    <% recentIntakes.forEach(item => { %>
+                                        <tr>
+                                            <td class="fw-bold font-monospace" style="color: var(--mps-navy);"><%= item.ob_number %></td>
+                                            <td class="small fw-semibold"><%= item.complainant_name %></td>
+                                            <td>
+                                                <% if (item.priority === 'Critical') { %>
+                                                    <span class="badge badge-priority-critical">CRITICAL</span>
+                                                <% } else if (item.priority === 'High') { %>
+                                                    <span class="badge badge-priority-high">HIGH</span>
+                                                <% } else if (item.priority === 'Medium') { %>
+                                                    <span class="badge badge-priority-medium">MEDIUM</span>
+                                                <% } else { %>
+                                                    <span class="badge badge-priority-low">LOW</span>
+                                                <% } %>
+                                            </td>
+                                            <td>
+                                                <% if (item.status === 'Closed') { %>
+                                                    <span class="badge badge-case-closed">Closed</span>
+                                                <% } else if (item.status === 'Under Investigation') { %>
+                                                    <span class="badge badge-case-investigation">Under Investigation</span>
+                                                <% } else { %>
+                                                    <span class="badge bg-light text-dark border">Reported</span>
+                                                <% } %>
+                                            </td>
+                                            <td class="small text-muted"><%= new Date(item.created_at).toLocaleDateString() %></td>
+                                        </tr>
+                                    <% }) %>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            <% } %>
+
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,370 @@
+<%- include('../partials/header') %>
+
+<div class="app-wrapper">
+    <%- include('../partials/sidebar') %>
+
+    <div class="main-content">
+        <%- include('../partials/topbar') %>
+
+        <div class="container-fluid py-4">
+
+            <!-- Page Header -->
+            <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+                <div>
+                    <h4 class="fw-bold mb-1" style="color: var(--mps-navy);">
+                        <i class="bi bi-folder2-open me-2 text-warning"></i>Case <%= caseItem.ob_number %>
+                    </h4>
+                    <p class="text-muted small mb-0"><%= caseItem.incident_location %> &middot; Registered <%= new Date(caseItem.created_at).toLocaleDateString() %></p>
+                </div>
+                <a href="/cases" class="btn btn-outline-navy btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i>Back to Case Register
+                </a>
+            </div>
+
+            <!-- Flash Alert Messages -->
+            <% if (typeof success !== 'undefined' && success && success.length > 0) { %>
+                <div class="alert alert-success alert-dismissible fade show small mb-4" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i><%= success %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <% } %>
+            <% if (typeof error !== 'undefined' && error && error.length > 0) { %>
+                <div class="alert alert-danger alert-dismissible fade show small mb-4" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i><%= error %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <% } %>
+
+            <!-- Case Overview Card -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-navy text-white d-flex align-items-center justify-content-between py-3 flex-wrap gap-2">
+                    <h6 class="mb-0 fw-bold"><i class="bi bi-info-circle-fill me-2 text-warning"></i>Case Overview</h6>
+                    <div class="d-flex gap-2">
+                        <% if (caseItem.priority === 'Critical') { %>
+                            <span class="badge badge-priority-critical">CRITICAL</span>
+                        <% } else if (caseItem.priority === 'High') { %>
+                            <span class="badge badge-priority-high">HIGH</span>
+                        <% } else if (caseItem.priority === 'Medium') { %>
+                            <span class="badge badge-priority-medium">MEDIUM</span>
+                        <% } else { %>
+                            <span class="badge badge-priority-low">LOW</span>
+                        <% } %>
+                        <% if (caseItem.status === 'Closed') { %>
+                            <span class="badge badge-case-closed">Closed</span>
+                        <% } else if (caseItem.status === 'Court Pending') { %>
+                            <span class="badge badge-case-open">Court Pending</span>
+                        <% } else if (caseItem.status === 'Archived') { %>
+                            <span class="badge badge-case-archived">Archived</span>
+                        <% } else { %>
+                            <span class="badge badge-case-investigation">Under Investigation</span>
+                        <% } %>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <span class="text-muted small text-uppercase fw-semibold d-block">Complainant</span>
+                            <span class="fw-semibold"><%= caseItem.complainant_name %></span><br>
+                            <span class="small text-muted"><%= caseItem.complainant_phone %></span>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="text-muted small text-uppercase fw-semibold d-block">Category</span>
+                            <span class="fw-semibold"><%= caseItem.crime_category %></span>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="text-muted small text-uppercase fw-semibold d-block">Unit</span>
+                            <span class="fw-semibold"><%= caseItem.unit_name %></span>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="text-muted small text-uppercase fw-semibold d-block">Assigned Investigator</span>
+                            <span class="fw-semibold"><%= caseItem.assigned_officer_name || 'Unassigned' %></span>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="text-muted small text-uppercase fw-semibold d-block">Intake Officer</span>
+                            <span class="fw-semibold"><%= caseItem.intake_officer_name %></span>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="text-muted small text-uppercase fw-semibold d-block">Incident Date/Time</span>
+                            <span class="fw-semibold">
+                                <%= caseItem.incident_datetime ? new Date(caseItem.incident_datetime).toLocaleString() : 'Not specified' %>
+                            </span>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted small text-uppercase fw-semibold d-block">Incident Narrative</span>
+                            <span><%= caseItem.incident_details %></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Request Panel -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-navy text-white py-3">
+                    <h6 class="mb-0 fw-bold"><i class="bi bi-hourglass-split me-2 text-warning"></i>Status Request</h6>
+                </div>
+                <div class="card-body">
+                    <% if (caseItem.requested_status) { %>
+                        <div class="alert alert-warning small mb-0">
+                            <i class="bi bi-clock-history me-2"></i>
+                            A request to change status to <strong><%= caseItem.requested_status %></strong> was submitted by
+                            <strong><%= caseItem.status_requested_by_name %></strong> on
+                            <%= new Date(caseItem.status_requested_at).toLocaleString() %>, and is awaiting Supervisor review.
+                            <% if (caseItem.status_request_notes) { %>
+                                <br><span class="text-muted">Notes: <%= caseItem.status_request_notes %></span>
+                            <% } %>
+                        </div>
+                    <% } else if (permissions.canRequestStatus) { %>
+                        <form action="/cases/<%= caseItem.id %>/request-status" method="POST" class="row g-3 align-items-end">
+                            <div class="col-md-4">
+                                <label for="requested_status" class="form-label">Request Status Change <span class="text-danger">*</span></label>
+                                <select name="requested_status" id="requested_status" class="form-select" required>
+                                    <option value="" disabled selected>-- Select --</option>
+                                    <option value="Closed">Close Case</option>
+                                    <option value="Court Pending">Transfer to Court</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="status_request_notes" class="form-label">Justification</label>
+                                <input type="text" name="status_request_notes" id="status_request_notes" class="form-control" placeholder="Brief reason for this request">
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-navy w-100">
+                                    <i class="bi bi-send-fill me-1"></i>Submit
+                                </button>
+                            </div>
+                        </form>
+                    <% } else { %>
+                        <p class="text-muted small mb-0">No status change request is currently pending for this case.</p>
+                    <% } %>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+
+                <!-- Investigation Notes & Timeline -->
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-navy text-white py-3">
+                            <h6 class="mb-0 fw-bold"><i class="bi bi-journal-text me-2 text-warning"></i>Investigation Notes & Timeline</h6>
+                        </div>
+                        <div class="card-body">
+                            <% if (permissions.canAddNote) { %>
+                                <form action="/cases/<%= caseItem.id %>/notes" method="POST" class="mb-3">
+                                    <textarea name="note" rows="3" class="form-control mb-2" placeholder="Add a progress note, witness statement, or milestone event..." required></textarea>
+                                    <button type="submit" class="btn btn-navy btn-sm">
+                                        <i class="bi bi-plus-lg me-1"></i>Add Note
+                                    </button>
+                                </form>
+                                <hr>
+                            <% } %>
+
+                            <% if (notes.length === 0) { %>
+                                <p class="text-muted small mb-0">No investigation notes recorded yet.</p>
+                            <% } else { %>
+                                <div class="timeline">
+                                    <% notes.forEach(n => { %>
+                                        <div class="timeline-item">
+                                            <div class="timeline-date"><%= new Date(n.created_at).toLocaleString() %> &middot; <%= n.officer_name %></div>
+                                            <div class="small mt-1"><%= n.note %></div>
+                                        </div>
+                                    <% }) %>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Evidence Ledger -->
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-navy text-white py-3">
+                            <h6 class="mb-0 fw-bold"><i class="bi bi-box-seam me-2 text-warning"></i>Evidence Ledger</h6>
+                        </div>
+                        <div class="card-body">
+                            <% if (permissions.canAddEvidence) { %>
+                                <form action="/cases/<%= caseItem.id %>/evidence" method="POST" class="mb-3">
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <input type="text" name="item_number" class="form-control form-control-sm" placeholder="Item # *" required>
+                                        </div>
+                                        <div class="col-6">
+                                            <select name="category" class="form-select form-select-sm">
+                                                <option value="Physical">Physical</option>
+                                                <option value="Documentary">Documentary</option>
+                                                <option value="Digital">Digital</option>
+                                                <option value="Forensic">Forensic</option>
+                                                <option value="Weapon">Weapon</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-12">
+                                            <input type="text" name="description" class="form-control form-control-sm" placeholder="Description *" required>
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="text" name="storage_location" class="form-control form-control-sm" placeholder="Storage location *" required>
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="datetime-local" name="collected_at" class="form-control form-control-sm" required>
+                                        </div>
+                                        <div class="col-12">
+                                            <button type="submit" class="btn btn-navy btn-sm w-100">
+                                                <i class="bi bi-plus-lg me-1"></i>Log Evidence
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                                <hr>
+                            <% } %>
+
+                            <% if (evidenceItems.length === 0) { %>
+                                <p class="text-muted small mb-0">No evidence items logged yet.</p>
+                            <% } else { %>
+                                <% evidenceItems.forEach(e => { %>
+                                    <div class="evidence-card p-2 mb-2">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <span class="fw-bold small font-monospace"><%= e.item_number %></span>
+                                                <span class="badge bg-light text-dark border ms-1"><%= e.category %></span>
+                                            </div>
+                                            <span class="badge bg-light text-dark border"><%= e.status %></span>
+                                        </div>
+                                        <div class="small mt-1"><%= e.description %></div>
+                                        <div class="small text-muted mt-1">
+                                            <i class="bi bi-geo-alt me-1"></i><%= e.storage_location %> &middot;
+                                            Collected by <%= e.collected_by_name %> on <%= new Date(e.collected_at).toLocaleDateString() %>
+                                        </div>
+                                    </div>
+                                <% }) %>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="row g-4 mb-4">
+
+                <!-- Suspects -->
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-navy text-white py-3">
+                            <h6 class="mb-0 fw-bold"><i class="bi bi-person-bounding-box me-2 text-warning"></i>Suspects</h6>
+                        </div>
+                        <div class="card-body">
+                            <% if (permissions.canLinkSuspectVictim) { %>
+                                <form action="/cases/<%= caseItem.id %>/suspects" method="POST" class="mb-3">
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <input type="text" name="first_name" class="form-control form-control-sm" placeholder="First name *" required>
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="text" name="last_name" class="form-control form-control-sm" placeholder="Last name *" required>
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="text" name="alias" class="form-control form-control-sm" placeholder="Alias">
+                                        </div>
+                                        <div class="col-6">
+                                            <select name="gender" class="form-select form-select-sm" required>
+                                                <option value="" disabled selected>Gender *</option>
+                                                <option value="Male">Male</option>
+                                                <option value="Female">Female</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="text" name="national_id" class="form-control form-control-sm" placeholder="National ID">
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="text" name="phone_number" class="form-control form-control-sm" placeholder="Phone number">
+                                        </div>
+                                        <div class="col-12">
+                                            <button type="submit" class="btn btn-navy btn-sm w-100">
+                                                <i class="bi bi-plus-lg me-1"></i>Link Suspect
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                                <hr>
+                            <% } %>
+
+                            <% if (suspects.length === 0) { %>
+                                <p class="text-muted small mb-0">No suspects linked to this case yet.</p>
+                            <% } else { %>
+                                <% suspects.forEach(s => { %>
+                                    <div class="d-flex align-items-center gap-2 mb-2 pb-2 border-bottom">
+                                        <div class="rounded-circle bg-light border d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px;">
+                                            <i class="bi bi-person-fill text-muted"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="small fw-semibold">
+                                                <%= s.first_name %> <%= s.last_name %>
+                                                <% if (s.alias) { %><span class="text-muted">"<%= s.alias %>"</span><% } %>
+                                            </div>
+                                            <div class="small text-muted"><%= s.link_status %></div>
+                                        </div>
+                                    </div>
+                                <% }) %>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Victims -->
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-navy text-white py-3">
+                            <h6 class="mb-0 fw-bold"><i class="bi bi-shield-fill-exclamation me-2 text-warning"></i>Victims</h6>
+                        </div>
+                        <div class="card-body">
+                            <% if (permissions.canLinkSuspectVictim) { %>
+                                <form action="/cases/<%= caseItem.id %>/victims" method="POST" class="mb-3">
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <input type="text" name="full_name" class="form-control form-control-sm" placeholder="Full name *" required>
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="text" name="phone_number" class="form-control form-control-sm" placeholder="Phone number">
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="email" name="email" class="form-control form-control-sm" placeholder="Email">
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="text" name="national_id" class="form-control form-control-sm" placeholder="National ID">
+                                        </div>
+                                        <div class="col-12">
+                                            <textarea name="statement" rows="2" class="form-control form-control-sm" placeholder="Victim statement (optional)"></textarea>
+                                        </div>
+                                        <div class="col-12">
+                                            <button type="submit" class="btn btn-navy btn-sm w-100">
+                                                <i class="bi bi-plus-lg me-1"></i>Add Victim
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                                <hr>
+                            <% } %>
+
+                            <% if (victims.length === 0) { %>
+                                <p class="text-muted small mb-0">No victim records linked to this case yet.</p>
+                            <% } else { %>
+                                <% victims.forEach(v => { %>
+                                    <div class="mb-2 pb-2 border-bottom">
+                                        <div class="small fw-semibold"><%= v.full_name %></div>
+                                        <div class="small text-muted"><%= v.phone_number || 'No phone on file' %></div>
+                                        <% if (v.statement) { %>
+                                            <div class="small mt-1 fst-italic">"<%= v.statement %>"</div>
+                                        <% } %>
+                                    </div>
+                                <% }) %>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

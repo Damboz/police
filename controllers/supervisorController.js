@@ -17,7 +17,7 @@ exports.getDashboard = async (req, res, next) => {
         const [[kpiCounts]] = await db.execute(`
             SELECT 
                 SUM(CASE WHEN assigned_officer_id IS NULL AND status != 'Closed' THEN 1 ELSE 0 END) AS unassignedCount,
-                SUM(CASE WHEN status = 'Court Pending' THEN 1 ELSE 0 END) AS pendingApprovalsCount,
+                SUM(CASE WHEN requested_status IS NOT NULL THEN 1 ELSE 0 END) AS pendingApprovalsCount,
                 SUM(CASE WHEN status = 'Under Investigation' THEN 1 ELSE 0 END) AS activeCasesCount,
                 SUM(CASE WHEN status = 'Under Investigation' AND DATEDIFF(CURDATE(), created_at) > ${OVERDUE_DAYS_THRESHOLD} THEN 1 ELSE 0 END) AS overdueCount
             FROM cases
@@ -41,20 +41,20 @@ exports.getDashboard = async (req, res, next) => {
             LIMIT 10
         `);
 
-        // 3. Pending Status Approvals / Court Review
+        // 3. Pending Status Approvals — cases with a live investigator request
         const [pendingApprovals] = await db.execute(`
             SELECT 
                 c.id, 
                 c.ob_number AS case_number, 
                 c.incident_details AS title, 
-                c.status, 
-                c.priority, 
-                c.updated_at,
+                c.requested_status,
+                c.status_request_notes,
+                c.status_requested_at,
                 CONCAT(inv.rank_title, ' ', inv.last_name) AS investigator_name
             FROM cases c
             LEFT JOIN users inv ON c.assigned_officer_id = inv.id
-            WHERE c.status = 'Court Pending'
-            ORDER BY c.updated_at ASC
+            WHERE c.requested_status IS NOT NULL
+            ORDER BY c.status_requested_at ASC
         `);
 
         // 4. Active Investigators Workload Summary
@@ -190,17 +190,22 @@ exports.processStatusApproval = async (req, res, next) => {
             return res.redirect('/supervisor/dashboard');
         }
 
-        const [caseRows] = await db.execute('SELECT id, ob_number, status FROM cases WHERE id = ?', [case_id]);
-        if (caseRows.length === 0) {
-            req.flash('error', 'Case record not found.');
+        const [caseRows] = await db.execute('SELECT id, ob_number, requested_status FROM cases WHERE id = ?', [case_id]);
+        if (caseRows.length === 0 || !caseRows[0].requested_status) {
+            req.flash('error', 'No pending status change request found for this case.');
             return res.redirect('/supervisor/dashboard');
         }
 
         const currentCase = caseRows[0];
-        const targetStatus = decision === 'APPROVE' ? 'Closed' : 'Under Investigation';
+        // On approval, apply whatever the investigator actually requested
+        // (Closed or Court Pending) — not a hardcoded value.
+        const targetStatus = decision === 'APPROVE' ? currentCase.requested_status : 'Under Investigation';
 
         await db.execute(
-            'UPDATE cases SET status = ?, updated_at = NOW() WHERE id = ?',
+            `UPDATE cases 
+             SET status = ?, requested_status = NULL, status_request_notes = NULL, 
+                 status_requested_by = NULL, status_requested_at = NULL, updated_at = NOW() 
+             WHERE id = ?`,
             [targetStatus, case_id]
         );
 
@@ -209,7 +214,7 @@ exports.processStatusApproval = async (req, res, next) => {
             [
                 supervisorId,
                 `STATUS_APPROVAL_${decision}`,
-                `Supervisor ${decision}D status change for Case OB ${currentCase.ob_number}. New status: ${targetStatus}. ${supervisor_notes ? 'Notes: ' + supervisor_notes : ''}`
+                `Supervisor ${decision}D status change request for Case OB ${currentCase.ob_number}. New status: ${targetStatus}. ${supervisor_notes ? 'Notes: ' + supervisor_notes : ''}`
             ]
         );
 

@@ -48,6 +48,7 @@ const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const supervisorRoutes = require('./routes/supervisorRoutes');
 const caseRoutes = require('./routes/caseRoutes');
+const generalController = require('./controllers/generalController');
 
 // ============================================================================
 // 3. VIEW ENGINE & MIDDLEWARE SETUP
@@ -120,7 +121,7 @@ app.use('/auth', authRoutes);
 // ----------------------------------------------------------------------------
 // B. DASHBOARD ROUTE (role-aware redirect)
 // ----------------------------------------------------------------------------
-app.get('/dashboard', isAuthenticated, (req, res) => {
+app.get('/dashboard', isAuthenticated, (req, res, next) => {
     const role = (req.session.user.role || '').toLowerCase();
     const roleId = req.session.user.role_id;
 
@@ -131,10 +132,12 @@ app.get('/dashboard', isAuthenticated, (req, res) => {
         return res.redirect('/supervisor/dashboard');
     }
 
-    // Fallback for Investigating Officer / Counter-Intake Officer
-    return res.render('general/dashboard', {
-        title: 'Dashboard | Limbe Police CMS'
-    });
+    
+
+    // Fallback for Investigating Officer / Counter-Intake Officer —
+    // delegated to generalController for role-aware dashboard data
+    // (assigned cases + KPIs for investigators, recent intakes for intake officers).
+    return generalController.getDashboard(req, res, next);
 });
 
 // ----------------------------------------------------------------------------
